@@ -1,178 +1,100 @@
-# CLIMS Full-Stack Application
+# CLIMS
 
-A containerized full-stack application built with **Next.js**, **Go (Golang)**, **MariaDB**, and **Nginx**.
+The runnable stack currently contains a Go/Fiber API and PostgreSQL 16. The `frontend/` and `mobile/` directories are placeholders. The default Compose stack runs the implemented services; the existing frontend Dockerfiles and Nginx configuration are reserved for later frontend work.
 
----
+## Start locally
 
-## 🏗️ Architecture Overview
+Requires Docker Desktop with Compose v2 (`include` support requires v2.20+). Run commands from the repository root:
 
-The application is structured into four main isolated components managed via Docker Compose:
-
-1. **Frontend**: Next.js App Router (TypeScript, Tailwind CSS).
-2. **Backend**: Go API server.
-3. **Database**: MariaDB instance pre-initialized with `clims_dump_11Nov2026.sql`.
-4. **Reverse Proxy**: Nginx acting as a unified entry point routing traffic between the frontend and backend.
-
-```
-                  ┌──────────────────────┐
-                  │     Client / Browser │
-                  └──────────┬───────────┘
-                             │
-                             │ (Port 80)
-                             ▼
-                  ┌──────────────────────┐
-                  │     Nginx Proxy      │
-                  └──────┬────────┬──────┘
-                         │        │
-           / (Frontend)  │        │  /api/ (Backend)
-                         ▼        ▼
-        ┌──────────────────┐    ┌──────────────────┐
-        │ Next.js Frontend │    │    Go Backend    │
-        └──────────────────┘    └────────┬─────────┘
-                                         │
-                                         │ (Port 3306)
-                                         ▼
-                                ┌──────────────────┐
-                                │ MariaDB Database │
-                                └──────────────────┘
+```sh
+make setup
+make docker-up
 ```
 
----
+`make setup` copies `infra/env/dev.env.example` only if your environment file does not exist. The backend embeds and applies versioned schema migrations at startup. PostgreSQL stores its data in a named volume; restarting the stack preserves it.
 
-## 📂 Directory Structure
+- API: `http://localhost:8080/api/v1`
+- Liveness: `http://localhost:8080/health/live`
+- Database readiness: `http://localhost:8080/health/ready`
+- PostgreSQL: `localhost:5432`, database `clims_db`, user `clims_user`
 
-```text
-clims/
-├── backend/                  # Go Backend Service
-│   ├── cmd/
-│   │   └── server/          # Main entry point (main.go)
-│   ├── internal/            # Business logic, database handlers, models
-│   ├── Dockerfile           # Multi-stage Docker build for Go
-│   ├── go.mod
-│   └── go.sum
-├── frontend/                 # Next.js Frontend Application
-│   ├── src/
-│   │   ├── app/             # App Router pages and layouts
-│   │   ├── components/      # UI components
-│   │   └── lib/             # API helpers and client utilities
-│   ├── Dockerfile           # Multi-stage Docker build for Next.js
-│   ├── package.json
-│   └── tailwind.config.js
-├── nginx/                    # Reverse Proxy Configurations
-│   ├── app.conf              # Server block routing rules
-│   └── nginx.conf            # Global Nginx directives
-├── clims_dump_11Nov2026.sql  # Initial database initialization dump
-├── dev.env                   # Development environment variables
-├── prod.env                  # Production environment variables
-├── dev.env.example           # Example environment template
-└── docker-compose.yml        # Master Docker Compose orchestration file
+Development credentials are in `infra/env/dev.env`. Change passwords and `JWT_SECRET` for deployment. Host ports bind to localhost. `DB_PORT` and `PORT` control host ports in Compose; containers always use 5432 and 8080 respectively. Compose sets the backend's database host to `postgres`; `DB_HOST=localhost` in the env file supports running Go directly.
+
+```sh
+make docker-down       # stops the stack, keeps database data
+make docker-build      # rebuilds and starts services
+make db-up             # PostgreSQL only
+make run-backend       # requires Go 1.26+, loads the environment file
+make test              # backend tests
 ```
 
----
+Use `ENV_FILE=infra/env/prod.env` to select another environment file. Copy `infra/env/prod.env.example` and replace its credentials first. For an external PostgreSQL server, run the backend with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, and `JWT_SECRET` set. Set `DB_SSLMODE` for the server's TLS policy. The local Compose database uses `disable` on its private container network.
 
-## ⚙️ Environment Configuration
+If Docker reports a permission error under `~/.docker/buildx/refs` (a root-owned buildx directory on this workstation), use a writable buildx configuration:
 
-The application uses environment files (`dev.env` and `prod.env`) to manage environment settings safely across environments.
-
-### Required Environment Variables
-
-| Variable              | Description              | Dev Default             | Prod Default                 |
-| :-------------------- | :----------------------- | :---------------------- | :--------------------------- |
-| `MYSQL_ROOT_PASSWORD` | MariaDB root password    | `root_password`         | *Secure Password*            |
-| `MYSQL_DATABASE`      | Database name            | `clims_db`              | `clims_db`                   |
-| `MYSQL_USER`          | Database username        | `clims_user`            | `clims_user`                 |
-| `MYSQL_PASSWORD`      | Database user password   | `clims_password`        | *Secure Password*            |
-| `DB_PORT`             | Host exposed DB port     | `3307`                  | `3306`                       |
-| `DB_HOST`             | Database host container  | `mariadb`               | `mariadb`                    |
-| `PORT`                | Backend container port   | `8080`                  | `8080`                       |
-| `NEXT_PUBLIC_API_URL` | Public API base URL      | `http://localhost:8080` | `https://yourdomain.com/api` |
-| `NGINX_PORT`          | Host HTTP listening port | `80`                    | `80`                         |
-
----
-
-## 🚀 Quick Start Guide
-
-### 1. Clone & Set Up Environment Files
-
-Copy `dev.env.example` to create your active environment files:
-
-```bash
-cp dev.env.example dev.env
-cp dev.env.example prod.env
+```sh
+BUILDX_CONFIG=/tmp/clims-buildx make docker-up
 ```
 
-### 2. Running in Development Mode
+## Import the legacy data
 
-Run the stack using `dev.env` (maps MariaDB to host port `3307` to avoid port collisions with any local MySQL instances):
+`infra/compose/clims_dump_11Nov2026.sql` is the original MySQL dump and must not be run against PostgreSQL. The converted PostgreSQL data is `infra/database/clims_postgres_seed.sql`. Schema and data are separate so normal startup creates an empty database without loading legacy accounts or tokens.
 
-```bash
-docker compose --env-file dev.env up --build -d
+After the backend is healthy and has created the schema, import the legacy data **once into an empty database**, before registering any users:
+
+```sh
+make db-seed
 ```
 
-### 3. Running in Production Mode
+The import has 29,898 rows across 18 tables. It runs in a transaction with `ON_ERROR_STOP`, preserves IDs and string escapes, and sets identity sequences beyond the imported IDs and original MySQL counters. It contains no DROP or TRUNCATE statements. A duplicate import fails on existing keys and rolls back its row changes. Do not serve traffic while importing data.
 
-Run the stack using `prod.env`:
+The schema retains legacy column names and data types, including quantities/dates originally stored as strings, spelling such as `longtitude`, and existing password hashes in `users.password`. The Go auth repository uses this schema. No foreign keys have been invented for legacy varchar references. PostgreSQL uses its default case-sensitive text comparisons; the original MySQL case-insensitive collations are not reproduced. Legacy usernames are not unique in the source data, so uniqueness is enforced on email only.
 
-```bash
-docker compose --env-file prod.env up --build -d
+The source and converted dump contain account data and access tokens; keep them within the same access boundary as the database backup.
+
+For a database outside Compose, apply the schema migration first (or start the API against that database), then import:
+
+```sh
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f infra/database/clims_postgres_seed.sql
 ```
 
-### 4. Verify Active Containers
+The conversion is reproducible:
 
-Check that all containers are running:
-
-```bash
-docker compose ps
+```sh
+make sql-convert
 ```
 
----
+This regenerates migration 1, its rollback, the PostgreSQL seed, and `infra/database/seed_manifest.json` from the original dump. Do not regenerate already deployed migrations after changing the source dump; add a new migration instead. The converter targets the syntax in this specific backup and rejects unsupported table definitions and INSERT formats.
 
-## 🌐 Port Mappings & Access Points
+## Validate PostgreSQL compatibility
 
-| Service         | Internal Port | Host Port (Dev) | Access Endpoint         |
-| :-------------- | :------------ | :-------------- | :---------------------- |
-| **Nginx Proxy** | `80`          | `80`            | `http://localhost`      |
-| **Frontend**    | `3000`        | Via Nginx       | `http://localhost/`     |
-| **Backend API** | `8080`        | Via Nginx       | `http://localhost/api/` |
-| **MariaDB**     | `3306`        | `3307`          | `localhost:3307`        |
+To verify without touching the application's database, start an isolated PostgreSQL container:
 
----
+```sh
+docker run -d --rm --name clims-postgres-validation \
+  -e POSTGRES_PASSWORD=validation_only -e POSTGRES_DB=clims_validation \
+  -v "$PWD:/workspace:ro" postgres:16-alpine
+# Wait until this succeeds:
+docker exec clims-postgres-validation pg_isready -U postgres -d clims_validation
 
-## 🛠️ Database Management & Tooling
+docker exec clims-postgres-validation psql -U postgres -d clims_validation \
+  -v ON_ERROR_STOP=1 -1 \
+  -f /workspace/backend/internal/database/migrations/000001_init_schema.up.sql
 
-### Connecting via DBeaver / Database Clients
+docker exec clims-postgres-validation psql -U postgres -d clims_validation \
+  -v ON_ERROR_STOP=1 -f /workspace/infra/database/clims_postgres_seed.sql
 
-* **Host**: `localhost`
-* **Port**: `3307` (Development)
-* **Database**: `clims_db`
-* **User**: `clims_user`
-* **Password**: `clims_password`
+python3 scripts/verify_postgres.py clims-postgres-validation
 
-### Database Logs & Inspection
-
-To inspect container logs or database dump initialization state:
-
-```bash
-docker logs mariadb_clims
+docker stop clims-postgres-validation
 ```
 
----
+The verifier compares every imported column value with the original dump and checks that generated IDs exceed the imported IDs. It consumes one sequence value per identity table; use it on a disposable validation database.
 
-## 🧹 Maintenance & Commands
+The PostgreSQL conversion uses [PostgreSQL 16 identity columns](https://www.postgresql.org/docs/16/sql-createtable.html). The JWT middleware uses the [official Fiber v3 module](https://docs.gofiber.io/contrib/jwt/).
 
-* **Stop the Stack**:
-  ```bash
-  docker compose down
-  ```
-* **Stop and Remove Volumes (Data Reset)**:
-  ```bash
-  docker compose down -v
-  ```
-* **Tail Container Logs**:
-  ```bash
-  docker compose logs -f
-  ```
-* **Rebuild Specific Service**:
-  ```bash
-  docker compose --env-file dev.env up --build -d backend
-  ```
+To smoke-test authentication against a disposable running stack (creates a test account):
+
+```sh
+python3 scripts/smoke_api.py http://localhost:8080
+```

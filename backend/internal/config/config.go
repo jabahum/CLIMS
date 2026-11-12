@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 
 	"github.com/spf13/viper"
 )
@@ -13,25 +15,43 @@ type Config struct {
 	DBUser    string `mapstructure:"DB_USER"`
 	DBPass    string `mapstructure:"DB_PASSWORD"`
 	DBName    string `mapstructure:"DB_NAME"`
-	JWTSecret string `mapstructure:"JWT_SECRET"` // Add JWT secret
+	DBSSLMode string `mapstructure:"DB_SSLMODE"`
+	JWTSecret string `mapstructure:"JWT_SECRET"`
 }
 
 func LoadConfig() (cfg Config, err error) {
-	// Set default values
-	viper.SetDefault("PORT", "8080")
-	viper.SetDefault("DB_PORT", "5432")
-	viper.SetDefault("DB_HOST", "localhost")
-
-	// Automatically read environment variables
-	viper.AutomaticEnv()
-
-	// Unmarshal values into our Config struct
-	err = viper.Unmarshal(&cfg)
-	return
+	v := viper.New()
+	v.SetDefault("PORT", "8080")
+	v.SetDefault("DB_PORT", "5432")
+	v.SetDefault("DB_HOST", "localhost")
+	v.SetDefault("DB_SSLMODE", "disable")
+	// Binding includes environment-only keys in Unmarshal.
+	for _, key := range []string{"PORT", "DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_SSLMODE", "JWT_SECRET"} {
+		if err := v.BindEnv(key); err != nil {
+			return cfg, err
+		}
+	}
+	if err = v.Unmarshal(&cfg); err != nil {
+		return cfg, err
+	}
+	for _, setting := range []struct{ name, value string }{
+		{"DB_USER", cfg.DBUser}, {"DB_PASSWORD", cfg.DBPass}, {"DB_NAME", cfg.DBName}, {"JWT_SECRET", cfg.JWTSecret},
+	} {
+		if setting.value == "" {
+			return cfg, fmt.Errorf("%s is required", setting.name)
+		}
+	}
+	return cfg, nil
 }
 
 func (cfg *Config) DSN() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName,
-	)
+	u := url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(cfg.DBUser, cfg.DBPass),
+		Host:   net.JoinHostPort(cfg.DBHost, cfg.DBPort),
+		Path:   "/" + cfg.DBName,
+	}
+	query := url.Values{"sslmode": {cfg.DBSSLMode}}
+	u.RawQuery = query.Encode()
+	return u.String()
 }

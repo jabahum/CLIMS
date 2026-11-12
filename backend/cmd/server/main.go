@@ -8,7 +8,6 @@ import (
 	"clims-backend/internal/database"
 	"clims-backend/internal/features/auth"
 	"clims-backend/internal/features/health"
-	"clims-backend/internal/features/orders"
 	"clims-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v3"
@@ -64,10 +63,6 @@ func main() {
 	authRepo := auth.NewRepository(dbPool)
 	authHandler := auth.NewHandler(authRepo, cfg.JWTSecret)
 	auth.RegisterRoutes(v1, authHandler, jwtAuthMiddleware)
-
-	ordersRepo := orders.NewRepository(dbPool)
-	ordersHandler := orders.NewHandler(ordersRepo)
-	orders.RegisterRoutes(v1, ordersHandler, jwtAuthMiddleware)
 
 	log.Printf("Server starting on port %s (Version: %s, Commit: %s)...", cfg.Port, Version, CommitHash)
 	if err := app.Listen(":" + cfg.Port); err != nil {
