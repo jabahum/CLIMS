@@ -6,3 +6,11 @@ backend/server
 frontend/node_modules/
 frontend/.next/
 __pycache__/
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/.env*
+!mobile/.env.example
+frontend/.env*
+!frontend/.env.example
+*.tsbuildinfo

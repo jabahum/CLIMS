@@ -15,12 +15,17 @@ help:
 	@echo "    make run-backend     - Run the backend server locally"
 	@echo ""
 	@echo "  Frontend:"
-	@echo "    make install-frontend- Install frontend dependencies (npm install)"
+	@echo "    make install-frontend- Install frontend dependencies (npm ci)"
 	@echo "    make run-frontend    - Run the Next.js frontend development server"
 	@echo "    make build-frontend  - Build the Next.js frontend for production"
 	@echo ""
+	@echo "  Mobile:"
+	@echo "    make install-mobile  - Install Expo/React Native dependencies"
+	@echo "    make run-mobile      - Start Expo on the host"
+	@echo "    make check-mobile    - Lint and type-check the mobile project"
+	@echo ""
 	@echo "  Docker Compose:"
-	@echo "    make docker-up       - Start the PostgreSQL and API stack"
+	@echo "    make docker-up       - Start PostgreSQL, API, web, Metro, and Nginx"
 	@echo "    make docker-down     - Stop and remove Docker Compose containers"
 	@echo "    make docker-build    - Rebuild and start the Docker stack"
 	@echo ""
@@ -32,6 +37,7 @@ help:
 	@echo "  General:"
 	@echo "    make clean           - Remove build binaries and artifacts"
 	@echo "    make test            - Run backend tests"
+	@echo "    make check-stack     - Verify Nginx routes, API readiness, and Metro"
 	@echo "    make docs-check      - Validate OpenAPI, documentation links, and Swagger assets"
 
 # --- Backend Targets ---
@@ -48,7 +54,7 @@ run-backend:
 # --- Frontend Targets ---
 install-frontend:
 	@echo "Installing frontend dependencies..."
-	cd frontend && npm install
+	cd frontend && npm ci
 
 run-frontend:
 	@echo "Starting Next.js frontend dev server..."
@@ -108,3 +114,19 @@ test-integration:
 docs-check:
 	python3 scripts/check_docs.py
 	docker run --rm -v "$(CURDIR)/docs:/docs:ro" python:3.13-alpine sh -c 'pip install --disable-pip-version-check --quiet openapi-spec-validator==0.7.2 && python -m openapi_spec_validator /docs/api/openapi.json'
+
+.PHONY: install-mobile run-mobile check-frontend check-mobile check-stack
+install-mobile:
+	cd mobile && npm ci
+
+run-mobile:
+	cd mobile && npm start
+
+check-frontend:
+	cd frontend && npm run typecheck
+
+check-mobile:
+	cd mobile && npm run lint && npm run typecheck
+
+check-stack:
+	python3 scripts/check_stack.py
