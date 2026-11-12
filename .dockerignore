@@ -1,0 +1,9 @@
+.git
+**/.DS_Store
+**/__pycache__
+**/node_modules
+backend/bin
+backend/server
+frontend
+mobile
+infra/env/*.env

@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"path/filepath"
 
 	"clims-backend/internal/config"
 	"clims-backend/internal/database"
+	"clims-backend/internal/features/apidocs"
 	"clims-backend/internal/features/auth"
 	"clims-backend/internal/features/health"
 	"clims-backend/internal/features/rbac"
@@ -54,6 +57,12 @@ func main() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
 	}))
+
+	docsDir := os.Getenv("DOCS_DIR")
+	if docsDir == "" {
+		docsDir = "../docs"
+	}
+	apidocs.RegisterRoutes(app, os.DirFS(filepath.Join(docsDir, "api")))
 
 	// Register Health Probes with Version info
 	healthHandler := health.NewHandler(dbPool, Version, CommitHash, BuildTime)

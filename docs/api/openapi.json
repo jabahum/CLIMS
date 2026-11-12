@@ -1,0 +1,1411 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CLIMS API",
+    "version": "1.0.0",
+    "description": "Current Go/Fiber API for authentication, users, RBAC, and health. All protected operations require a Bearer JWT and an active account. Permission codes are application permissions, not OAuth scopes. Limits are per backend process. Public signup never assigns a role."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Same origin as the API and Swagger UI"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "RBAC"
+    },
+    {
+      "name": "Health"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "register",
+        "summary": "Register an unassigned account",
+        "description": "Creates an active account with no assigned role. Role and status fields are rejected. Limited to 10 requests per IP per minute.",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "login",
+        "summary": "Log in",
+        "description": "Returns a 24-hour HS256 JWT and the current account profile. Limited to 10 failed attempts per IP per minute. Successful requests do not consume the limit.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "getProfile",
+        "summary": "Get the current profile",
+        "description": "Any active account can read its own profile, including accounts with no assigned role. Status and permissions are reloaded from PostgreSQL.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "listUsers",
+        "summary": "List users",
+        "description": "List users Requires all permissions: users:read.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "users:read"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "createUser",
+        "summary": "Create a user with a role",
+        "description": "Create a user with a role Requires all permissions: users:create, roles:assign.",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "users:create",
+          "roles:assign"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "getUser",
+        "summary": "Get a user",
+        "description": "Get a user Requires all permissions: users:read.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "users:read"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/role": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "assignRole",
+        "summary": "Assign a user role",
+        "description": "Assigns an existing CLIMS role. Changes affect the next protected request. Demoting the last active admin is rejected. Requires all permissions: roles:assign.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "roles:assign"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/status": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "updateStatus",
+        "summary": "Activate or disable a user",
+        "description": "Disabled accounts cannot log in or use existing JWTs. Disabling the last active admin is rejected. Requires all permissions: users:update.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "users:update"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatusRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/roles": {
+      "get": {
+        "tags": [
+          "RBAC"
+        ],
+        "operationId": "listRoles",
+        "summary": "List roles and their permissions",
+        "description": "List roles and their permissions Requires all permissions: roles:read.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "roles:read"
+        ]
+      }
+    },
+    "/api/v1/roles/{id}/permissions": {
+      "put": {
+        "tags": [
+          "RBAC"
+        ],
+        "operationId": "setPermissions",
+        "summary": "Replace a role permission set",
+        "description": "Replaces permissions atomically. Unknown codes roll back the update. Role 1 (admin) is immutable. Changes affect the next protected request. Requires all permissions: roles:manage.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "roles:manage"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPermissionsRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/permissions": {
+      "get": {
+        "tags": [
+          "RBAC"
+        ],
+        "operationId": "listPermissions",
+        "summary": "List supported permission codes",
+        "description": "List supported permission codes Requires all permissions: roles:read.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-required-permissions": [
+          "roles:read"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "liveness",
+        "summary": "Check process liveness",
+        "description": "Check process liveness",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "readiness",
+        "summary": "Check PostgreSQL readiness",
+        "description": "Pings PostgreSQL with a three-second timeout; returns 503 if the database is unreachable.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Paste the token returned by POST /api/v1/auth/login. Role and permission changes take effect on the next protected request."
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "username",
+          "email",
+          "password"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 50,
+            "example": "newuser",
+            "description": "Trimmed before validation. Existing legacy usernames are not unique."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "example": "user@example.test",
+            "description": "Trimmed, lowercased, and unique without regard to case."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "writeOnly": true,
+            "minLength": 8,
+            "maxLength": 72,
+            "description": "At least 8 characters; at most 72 UTF-8 bytes (not just characters)."
+          },
+          "firstname": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "lastname": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "phone_number": {
+            "type": "string",
+            "maxLength": 15
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "username",
+          "email",
+          "password",
+          "role_id"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 50,
+            "example": "newuser",
+            "description": "Trimmed before validation. Existing legacy usernames are not unique."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "example": "user@example.test",
+            "description": "Trimmed, lowercased, and unique without regard to case."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "writeOnly": true,
+            "minLength": 8,
+            "maxLength": 72,
+            "description": "At least 8 characters; at most 72 UTF-8 bytes (not just characters)."
+          },
+          "firstname": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "lastname": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "phone_number": {
+            "type": "string",
+            "maxLength": 15
+          },
+          "role_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "example": 7,
+            "description": "Existing CLIMS role ID."
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "example": "user@example.test",
+            "description": "Trimmed, lowercased, and unique without regard to case."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "writeOnly": true,
+            "minLength": 1,
+            "maxLength": 72,
+            "description": "At most 72 UTF-8 bytes. Login supports existing bcrypt passwords."
+          }
+        }
+      },
+      "AssignRoleRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role_id"
+        ],
+        "properties": {
+          "role_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "example": 7
+          }
+        }
+      },
+      "UpdateStatusRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled"
+            ]
+          }
+        }
+      },
+      "SetPermissionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "permissions"
+        ],
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "enum": [
+                "users:read",
+                "users:create",
+                "users:update",
+                "roles:read",
+                "roles:assign",
+                "roles:manage"
+              ]
+            },
+            "description": "Replaces the complete permission set; [] revokes all management permissions. Admin (role 1) cannot be changed."
+          }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "example": 7
+          },
+          "name": {
+            "type": "string",
+            "example": "hotspot manager"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "users:read",
+                "users:create",
+                "users:update",
+                "roles:read",
+                "roles:assign",
+                "roles:manage"
+              ]
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "email",
+          "firstname",
+          "lastname",
+          "phone_number",
+          "status",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "description": "Legacy accounts without an email return an empty string."
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "phone_number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "role": {
+            "$ref": "#/components/schemas/NullableRole"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "JWTError": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Unauthorized: missing or invalid token"
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "NullableRole": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "example": 7
+          },
+          "name": {
+            "type": "string",
+            "example": "hotspot manager"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "users:read",
+                "users:create",
+                "users:update",
+                "roles:read",
+                "roles:assign",
+                "roles:manage"
+              ]
+            }
+          }
+        },
+        "nullable": true,
+        "description": "Null for an unassigned account or an unresolved legacy role."
+      },
+      "CreatedUserResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "user_id"
+            ],
+            "properties": {
+              "user_id": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "token",
+              "token_type",
+              "expires_in",
+              "user"
+            ],
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "token_type": {
+                "type": "string",
+                "enum": [
+                  "Bearer"
+                ]
+              },
+              "expires_in": {
+                "type": "integer",
+                "enum": [
+                  86400
+                ]
+              },
+              "user": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        }
+      },
+      "UsersResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "users",
+              "limit",
+              "offset"
+            ],
+            "properties": {
+              "users": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              },
+              "offset": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "RolesResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            }
+          }
+        }
+      },
+      "PermissionsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "users:read",
+                "users:create",
+                "users:update",
+                "roles:read",
+                "roles:assign",
+                "roles:manage"
+              ]
+            }
+          }
+        }
+      },
+      "LivenessResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "status",
+              "version",
+              "commit_hash",
+              "build_time"
+            ],
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "commit_hash": {
+                "type": "string"
+              },
+              "build_time": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ReadinessResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "database",
+              "status",
+              "version"
+            ],
+            "properties": {
+              "database": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Malformed JSON, unknown fields, invalid ID, or invalid pagination.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing, invalid, or expired token; missing account; or incorrect login credentials.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                },
+                {
+                  "$ref": "#/components/schemas/JWTError"
+                }
+              ]
+            }
+          },
+          "text/plain": {
+            "schema": {
+              "type": "string",
+              "example": "Unauthorized"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Account is disabled or lacks a required permission.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "User or role not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Email already exists, last active admin would be removed, or admin permissions cannot be changed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Invalid fields, password exceeds 72 bytes, or unknown role/permission.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many attempts from the same IP; try again later.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds until another attempt is allowed.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Database, hashing, token signing, or other server failure.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "Database readiness check failed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
