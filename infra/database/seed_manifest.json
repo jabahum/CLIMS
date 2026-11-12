@@ -1,0 +1,24 @@
+{
+  "source_sha256": "0c544426554e4d710a37e1e0d18ff2001016d9e9514d6dd0438b243e3efe7ae2",
+  "rows": {
+    "condom_inventories": 97,
+    "condoms": 4,
+    "evidence": 221,
+    "failed_jobs": 0,
+    "hot_spot_stocks": 142,
+    "hot_spots": 18221,
+    "hotspot_user_mappings": 0,
+    "migrations": 28,
+    "notifications": 0,
+    "orders": 0,
+    "organization_units": 8041,
+    "password_resets": 0,
+    "personal_access_tokens": 1716,
+    "roles": 11,
+    "transactions": 870,
+    "unit_of_measures": 2,
+    "user_notifications": 90,
+    "users": 455
+  },
+  "total_rows": 29898
+}

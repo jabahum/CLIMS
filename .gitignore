@@ -1,0 +1,8 @@
+.DS_Store
+infra/env/*.env
+!infra/env/*.env.example
+backend/bin/
+backend/server
+frontend/node_modules/
+frontend/.next/
+__pycache__/

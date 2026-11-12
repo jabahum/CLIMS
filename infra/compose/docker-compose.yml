@@ -1,83 +1,51 @@
-version: "3.8"
+name: clims
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: clims_postgres
     environment:
-      POSTGRES_DB: clims_db
-      POSTGRES_USER: clims_user
-      POSTGRES_PASSWORD: clims_password
+      POSTGRES_DB: ${DB_NAME:-clims_db}
+      POSTGRES_USER: ${DB_USER:-clims_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in your environment file}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - clims-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U clims_user -d clims_db"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: clims_backend
+      context: ../../backend
+      dockerfile: ../infra/docker/backend/Dockerfile
+      args:
+        VERSION: ${VERSION:-1.0.0}
+        COMMIT_HASH: ${COMMIT_HASH:-unknown}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
     environment:
-      DB_HOST: ${DB_HOST}
+      DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      PORT: ${PORT}
+      DB_USER: ${DB_USER:-clims_user}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in your environment file}
+      DB_NAME: ${DB_NAME:-clims_db}
+      DB_SSLMODE: disable
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment file}
+      PORT: 8080
+    ports:
+      - "127.0.0.1:${PORT:-8080}:8080"
     depends_on:
       postgres:
-        condition: service_healthy # Waits for Postgres to be fully ready before starting backend
-    networks:
-      - clims-net
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
       interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: clims_frontend
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-    depends_on:
-      backend:
-        condition: service_healthy # Waits for backend health check to pass before starting frontend
-    networks:
-      - clims-net
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    container_name: clims_nginx
-    ports:
-      - "${NGINX_PORT}:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/app.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - clims-net
-    restart: unless-stopped
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
-
-networks:
-  clims-net:
-    driver: bridge

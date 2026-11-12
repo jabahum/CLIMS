@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"strconv"
 	"time"
 
 	"clims-backend/internal/pkg/response"
@@ -37,7 +38,7 @@ func (h *Handler) Register(c fiber.Ctx) error {
 
 	userID, err := h.Repo.CreateUser(c.Context(), req.Username, req.Email, string(hashedPassword))
 	if err != nil {
-		return response.Error(c, fiber.StatusConflict, "email or username already exists", nil)
+		return response.Error(c, fiber.StatusConflict, "email already exists", nil)
 	}
 
 	return response.Success(c, fiber.StatusCreated, "user registered successfully", fiber.Map{
@@ -65,7 +66,7 @@ func (h *Handler) Login(c fiber.Ctx) error {
 	}
 
 	claims := jwt.MapClaims{
-		"sub":   user.ID,
+		"sub":   strconv.Itoa(user.ID),
 		"email": user.Email,
 		"exp":   time.Now().Add(24 * time.Hour).Unix(),
 	}
@@ -87,7 +88,10 @@ func (h *Handler) Me(c fiber.Ctx) error {
 		return response.Error(c, fiber.StatusUnauthorized, "unauthorized", nil)
 	}
 
-	userID := int(userIDVal.(float64))
+	userID, ok := userIDVal.(int)
+	if !ok || userID <= 0 {
+		return response.Error(c, fiber.StatusUnauthorized, "unauthorized", nil)
+	}
 	user, err := h.Repo.GetUserByID(c.Context(), userID)
 	if err != nil {
 		return response.Error(c, fiber.StatusNotFound, "user not found", nil)
