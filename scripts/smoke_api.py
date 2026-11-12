@@ -29,8 +29,8 @@ suffix = uuid.uuid4().hex[:12]
 account = {'username': 'smoke_' + suffix, 'email': suffix + '@example.test', 'password': 'smoke-password-123'}
 user_id = request('/api/v1/auth/register', 201, account)['data']['user_id']
 request('/api/v1/auth/register', 409, account)
-request('/api/v1/auth/login', 401, {**account, 'password': 'incorrect'})
-token = request('/api/v1/auth/login', 200, account)['data']['token']
+request('/api/v1/auth/login', 401, {'email': account['email'], 'password': 'incorrect'})
+token = request('/api/v1/auth/login', 200, {'email': account['email'], 'password': account['password']})['data']['token']
 profile = request('/api/v1/auth/me', 200, token=token)['data']
 assert profile['id'] == user_id and profile['email'] == account['email']
 request('/api/v1/auth/me', 401)
