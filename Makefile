@@ -32,6 +32,7 @@ help:
 	@echo "  General:"
 	@echo "    make clean           - Remove build binaries and artifacts"
 	@echo "    make test            - Run backend tests"
+	@echo "    make docs-check      - Validate OpenAPI, documentation links, and Swagger assets"
 
 # --- Backend Targets ---
 build-backend:
@@ -102,3 +103,8 @@ create-admin:
 test-integration:
 	@test -n "$(TEST_DATABASE_URL)" || (echo "Set TEST_DATABASE_URL to an isolated PostgreSQL server with CREATE DATABASE permission"; exit 1)
 	cd backend && go test -count=1 ./internal/integration
+
+.PHONY: docs-check
+docs-check:
+	python3 scripts/check_docs.py
+	docker run --rm -v "$(CURDIR)/docs:/docs:ro" python:3.13-alpine sh -c 'pip install --disable-pip-version-check --quiet openapi-spec-validator==0.7.2 && python -m openapi_spec_validator /docs/api/openapi.json'

@@ -7,9 +7,9 @@ ARG VERSION=1.0.0
 ARG COMMIT_HASH=unknown
 ARG BUILD_TIME=unknown
 
-COPY go.mod go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
-COPY . .
+COPY backend/ .
 
 # Build binary with injected ldflags
 RUN CGO_ENABLED=0 GOOS=linux go build \
@@ -19,10 +19,12 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # Runner stage
 FROM alpine:latest
 WORKDIR /root/
+ENV DOCS_DIR=/app/docs
 
 RUN apk add --no-cache curl
 
 COPY --from=builder /server .
+COPY docs/api /app/docs/api
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1

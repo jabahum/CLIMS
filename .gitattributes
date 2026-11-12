@@ -1,0 +1,3 @@
+# Keep upstream Swagger assets intact and collapsed in code review.
+docs/api/assets/* linguist-vendored
+docs/api/assets/*.txt -whitespace
