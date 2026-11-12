@@ -94,3 +94,11 @@ db-seed:
 
 sql-convert:
 	python3 scripts/convert_mysql_dump.py
+
+.PHONY: create-admin test-integration
+create-admin:
+	set -a; . ./$(ENV_FILE); set +a; cd backend && go run ./cmd/create-admin
+
+test-integration:
+	@test -n "$(TEST_DATABASE_URL)" || (echo "Set TEST_DATABASE_URL to an isolated PostgreSQL server with CREATE DATABASE permission"; exit 1)
+	cd backend && go test -count=1 ./internal/integration

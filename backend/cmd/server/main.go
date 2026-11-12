@@ -8,6 +8,8 @@ import (
 	"clims-backend/internal/database"
 	"clims-backend/internal/features/auth"
 	"clims-backend/internal/features/health"
+	"clims-backend/internal/features/rbac"
+	"clims-backend/internal/features/users"
 	"clims-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v3"
@@ -48,7 +50,7 @@ func main() {
 	app.Use(helmet.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
 	}))
@@ -60,9 +62,14 @@ func main() {
 	v1 := app.Group("/api/v1")
 	jwtAuthMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret)
 
-	authRepo := auth.NewRepository(dbPool)
-	authHandler := auth.NewHandler(authRepo, cfg.JWTSecret)
-	auth.RegisterRoutes(v1, authHandler, jwtAuthMiddleware)
+	userRepo := users.NewRepository(dbPool)
+	userService := users.NewService(userRepo)
+	roleRepo := rbac.NewRepository(dbPool)
+	activeUser := users.ActiveUser(userRepo)
+
+	auth.RegisterRoutes(v1, auth.NewHandler(userRepo, userService, cfg.JWTSecret), jwtAuthMiddleware, activeUser)
+	users.RegisterRoutes(v1, users.NewHandler(userRepo, userService, roleRepo), jwtAuthMiddleware, activeUser)
+	rbac.RegisterRoutes(v1, rbac.NewHandler(roleRepo), jwtAuthMiddleware, activeUser)
 
 	log.Printf("Server starting on port %s (Version: %s, Commit: %s)...", cfg.Port, Version, CommitHash)
 	if err := app.Listen(":" + cfg.Port); err != nil {

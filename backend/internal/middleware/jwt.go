@@ -11,7 +11,8 @@ import (
 
 func NewJWTMiddleware(secret string) fiber.Handler {
 	return jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{JWTAlg: jwtware.HS256, Key: []byte(secret)},
+		ParserOptions: []jwt.ParserOption{jwt.WithExpirationRequired()},
+		SigningKey:    jwtware.SigningKey{JWTAlg: jwtware.HS256, Key: []byte(secret)},
 		SuccessHandler: func(c fiber.Ctx) error {
 			token := jwtware.FromContext(c)
 			if token == nil {
