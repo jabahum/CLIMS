@@ -15,3 +15,6 @@ frontend/.env*
 !frontend/.env.example
 *.tsbuildinfo
 artifacts/
+node_modules/
+.venv/
+.ruff_cache/

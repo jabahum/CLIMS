@@ -1,5 +1,4 @@
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
 export async function checkReadiness(): Promise<string> {
   const controller = new AbortController();
@@ -15,5 +14,7 @@ export async function checkReadiness(): Promise<string> {
       throw new Error("The API returned an unexpected readiness response.");
     }
     return "API and database connected";
-  } finally { clearTimeout(timeout); }
+  } finally {
+    clearTimeout(timeout);
+  }
 }

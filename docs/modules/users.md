@@ -4,27 +4,27 @@
 
 Source: `backend/internal/features/users/`.
 
-| File | Responsibility |
-| --- | --- |
-| `model.go` | Account response model and `HasPermission` implementation |
-| `dto.go` | Account input, admin creation, role assignment, status change, normalization |
+| File            | Responsibility                                                                |
+| --------------- | ----------------------------------------------------------------------------- |
+| `model.go`      | Account response model and `HasPermission` implementation                     |
+| `dto.go`        | Account input, admin creation, role assignment, status change, normalization  |
 | `repository.go` | Account SQL, identity lookup, paginated listing, transactional access changes |
-| `service.go` | Shared bcrypt hashing and account creation |
-| `middleware.go` | Active-account resolution and current-user retrieval |
-| `handler.go` | Management requests, validation, pagination, and HTTP responses |
-| `routes.go` | User routes and required permission gates |
+| `service.go`    | Shared bcrypt hashing and account creation                                    |
+| `middleware.go` | Active-account resolution and current-user retrieval                          |
+| `handler.go`    | Management requests, validation, pagination, and HTTP responses               |
+| `routes.go`     | User routes and required permission gates                                     |
 
 ## Management routes
 
 All routes require JWT authentication and an active account.
 
-| Method | Route | Required permissions |
-| --- | --- | --- |
-| GET | `/api/v1/users` | `users:read` |
-| GET | `/api/v1/users/{id}` | `users:read` |
-| POST | `/api/v1/users` | Both `users:create` and `roles:assign` |
-| PATCH | `/api/v1/users/{id}/role` | `roles:assign` |
-| PATCH | `/api/v1/users/{id}/status` | `users:update` |
+| Method | Route                       | Required permissions                   |
+| ------ | --------------------------- | -------------------------------------- |
+| GET    | `/api/v1/users`             | `users:read`                           |
+| GET    | `/api/v1/users/{id}`        | `users:read`                           |
+| POST   | `/api/v1/users`             | Both `users:create` and `roles:assign` |
+| PATCH  | `/api/v1/users/{id}/role`   | `roles:assign`                         |
+| PATCH  | `/api/v1/users/{id}/status` | `users:update`                         |
 
 Listing defaults to `limit=50&offset=0`, allows limits from 1 to 100, and orders by user ID. Account responses include names, email, phone, status, and the resolved role and permissions. `PasswordHash` has `json:"-"` and is never serialized.
 
