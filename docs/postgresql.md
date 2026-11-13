@@ -2,6 +2,8 @@
 
 [Documentation index](README.md)
 
+To generate new up/down SQL files, see [creating PostgreSQL migrations](migrations.md). Use `make migrate-create NAME=description`; the historical dump converter below is separate.
+
 ## Import the legacy data
 
 `infra/compose/clims_dump_11Nov2026.sql` is the original MySQL dump and must not be run against PostgreSQL. The converted PostgreSQL data is `infra/database/clims_postgres_seed.sql`. Schema and data are separate so normal startup creates an empty database without loading legacy accounts or tokens.

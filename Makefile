@@ -40,6 +40,7 @@ help:
 	@echo "    make db-up           - Start PostgreSQL only"
 	@echo "    make db-seed         - Import legacy data into an empty migrated database"
 	@echo "    make sql-convert     - Regenerate PostgreSQL SQL from the MySQL dump"
+	@echo "    make migrate-create NAME=description - Generate the next SQL up/down pair"
 	@echo ""
 	@echo "  General:"
 	@echo "    make clean           - Remove build binaries and artifacts"
@@ -114,6 +115,11 @@ db-seed:
 
 sql-convert:
 	python3 scripts/convert_mysql_dump.py
+
+.PHONY: migrate-create
+migrate-create: export MIGRATION_NAME = $(NAME)
+migrate-create:
+	python3 scripts/create_migration.py
 
 .PHONY: create-admin test-integration
 create-admin:

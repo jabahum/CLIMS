@@ -9,6 +9,7 @@ Project documentation lives in the root [`docs/`](docs/README.md) folder:
 - [CI checks and formatting](docs/ci.md)
 - [Service image releases](docs/releases.md)
 - [PostgreSQL and legacy imports](docs/postgresql.md)
+- [Creating PostgreSQL migrations](docs/migrations.md)
 - [Module architecture](docs/modules/README.md)
 - [Authentication module](docs/modules/auth.md)
 - [Users module](docs/modules/users.md)
