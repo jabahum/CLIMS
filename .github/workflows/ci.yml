@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
   push:
     branches: [main]
@@ -9,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -43,6 +44,10 @@ jobs:
         run: |
           python scripts/check_docs.py
           python -m openapi_spec_validator docs/api/openapi.json
+      - name: Test release metadata and manifests
+        run: |
+          python scripts/project_version.py check
+          python -m unittest discover -s scripts -p 'test_*.py'
       - name: Validate development and production Compose models
         run: python scripts/check_environments.py
 

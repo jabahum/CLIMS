@@ -1,0 +1,169 @@
+name: Service images
+
+on:
+  pull_request:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: service-images-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  prepare:
+    name: Validate image release inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      image_prefix: ${{ steps.metadata.outputs.image_prefix }}
+      prerelease: ${{ steps.metadata.outputs.prerelease }}
+      app_version: ${{ steps.metadata.outputs.app_version }}
+      matrix: ${{ steps.metadata.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Validate version and mobile API URL
+        id: metadata
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+        run: python scripts/release_images.py prepare
+      - name: Require a main commit and an unpublished release tag
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo 'This release already exists. Use a new version tag.'
+            exit 1
+          fi
+
+  checks:
+    name: Release CI
+    if: github.event_name == 'push'
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build ${{ matrix.service }} production image
+    needs: [prepare, checks]
+    if: >-
+      ${{ !cancelled() && needs.prepare.result == 'success' &&
+          (needs.checks.result == 'success' || github.event_name == 'pull_request') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Set build timestamp
+        id: timestamp
+        run: printf 'created=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - name: Build production image
+        id: image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: infra/docker/${{ matrix.service }}/Dockerfile.prod
+          platforms: linux/amd64
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ needs.prepare.outputs.image_prefix }}/${{ matrix.service }}:${{ needs.prepare.outputs.version }}
+          build-args: |
+            VERSION=${{ needs.prepare.outputs.app_version }}
+            COMMIT_HASH=${{ github.sha }}
+            BUILD_TIME=${{ steps.timestamp.outputs.created }}
+            EXPO_PUBLIC_API_URL=${{ github.event_name == 'push' && vars.EXPO_PUBLIC_API_URL || 'https://example.invalid/api/v1' }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.prepare.outputs.version }}
+            org.opencontainers.image.created=${{ steps.timestamp.outputs.created }}
+          cache-from: type=gha,scope=prod-${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=prod-${{ matrix.service }}
+          provenance: true
+          sbom: true
+      - name: Record published digest
+        if: github.event_name == 'push'
+        env:
+          IMAGE: ${{ needs.prepare.outputs.image_prefix }}/${{ matrix.service }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+          SERVICE: ${{ matrix.service }}
+        run: |
+          mkdir -p digests
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          Path(f"digests/{os.environ['SERVICE']}.json").write_text(
+              json.dumps({"image": os.environ["IMAGE"], "digest": os.environ["DIGEST"]}) + "\n"
+          )
+          PY
+      - name: Upload image digest
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: image-digest-${{ matrix.service }}
+          path: digests/${{ matrix.service }}.json
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release and image manifest
+    if: github.event_name == 'push'
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: image-digest-*
+          merge-multiple: true
+          path: digests
+      - name: Assemble digest-pinned image manifest
+        env:
+          IMAGE_PREFIX: ${{ needs.prepare.outputs.image_prefix }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.version }}
+        run: python scripts/release_images.py manifest
+      - name: Create release after all images have published
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.version }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+        run: |
+          args=(--verify-tag --title "$RELEASE_TAG" --notes-file release/images.md)
+          if [ "$PRERELEASE" = true ]; then
+            args+=(--prerelease)
+          fi
+          gh release create "$RELEASE_TAG" release/images.json release/images.env "${args[@]}"

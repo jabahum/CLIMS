@@ -8,7 +8,7 @@ ENV_FILE ?= infra/env/$(ENVIRONMENT).env
 COMPOSE = docker compose --env-file $(ENV_FILE) -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.$(ENVIRONMENT).yml
 
 # Project variables
-VERSION ?= 1.0.0
+VERSION ?= $(shell cat VERSION)
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -47,6 +47,8 @@ help:
 	@echo "    make lint            - Run Go, web, mobile, and Python linters"
 	@echo "    make format          - Format Go, Python, web/mobile, and documentation"
 	@echo "    make format-check    - Check formatting without modifying files"
+	@echo "    make version-check   - Check shared application version metadata"
+	@echo "    make version-set VERSION=x.y.z - Update all application versions"
 	@echo "    make check-stack     - Verify selected environment routes (dev includes Metro)"
 	@echo "    make check-environments - Verify dev/prod Docker and Compose conventions"
 	@echo "    make docs-check      - Validate OpenAPI, documentation links, and Swagger assets"
@@ -186,3 +188,10 @@ format-check:
 	npm run format:check
 	python3 -m ruff format --check scripts
 	@test -z "$$(gofmt -l backend)" || (gofmt -l backend; exit 1)
+
+.PHONY: version-check version-set
+version-check:
+	python3 scripts/project_version.py check
+
+version-set:
+	python3 scripts/project_version.py set "$(VERSION)"

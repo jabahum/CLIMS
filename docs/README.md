@@ -4,6 +4,8 @@ The documentation source is this repository's root `docs/` folder. The root READ
 
 See [CI checks and formatting](ci.md) for pull request/main checks and local verification commands.
 
+See [service image releases](releases.md) for GHCR builds, version tags, and digest-pinned deployments.
+
 | Guide                                    | Purpose                                                                          |
 | ---------------------------------------- | -------------------------------------------------------------------------------- |
 | [Setup](setup.md)                        | Start the stack, configure environments, and run the API locally                 |
