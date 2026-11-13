@@ -1,0 +1,15 @@
+# Generated, vendored, or local-only files
+**/node_modules/
+**/AGENTS.md
+frontend/next-env.d.ts
+frontend/.next/
+mobile/.expo/
+mobile/dist/
+docs/api/assets/
+artifacts/
+**/package-lock.json
+.vscode/
+.agents/
+.codex/
+.venv/
+.ruff_cache/

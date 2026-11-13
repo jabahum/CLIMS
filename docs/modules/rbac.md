@@ -4,45 +4,45 @@
 
 Source: `backend/internal/features/rbac/`.
 
-| File | Responsibility |
-| --- | --- |
-| `model.go` | Role IDs, names, and permission lists |
-| `dto.go` | Complete permission-set replacement request |
+| File            | Responsibility                                                       |
+| --------------- | -------------------------------------------------------------------- |
+| `model.go`      | Role IDs, names, and permission lists                                |
+| `dto.go`        | Complete permission-set replacement request                          |
 | `repository.go` | Role/permission catalog queries and transactional permission updates |
-| `middleware.go` | `PermissionHolder`, principal-local key, and permission gate |
-| `handler.go` | Catalog responses, permission updates, and error handling |
-| `routes.go` | Role and permission routes |
+| `middleware.go` | `PermissionHolder`, principal-local key, and permission gate         |
+| `handler.go`    | Catalog responses, permission updates, and error handling            |
+| `routes.go`     | Role and permission routes                                           |
 
 ## Role catalog
 
 Migration 2 preserves the original CLIMS IDs and names:
 
-| ID | Role |
-| --- | --- |
-| 1 | admin |
-| 2 | moh |
-| 3 | nms |
-| 4 | jms |
-| 5 | dfcp |
-| 6 | store incharge |
-| 7 | hotspot manager |
-| 8 | delivery agent |
-| 9 | other supplier |
-| 10 | healthy facility |
-| 11 | vht |
+| ID  | Role             |
+| --- | ---------------- |
+| 1   | admin            |
+| 2   | moh              |
+| 3   | nms              |
+| 4   | jms              |
+| 5   | dfcp             |
+| 6   | store incharge   |
+| 7   | hotspot manager  |
+| 8   | delivery agent   |
+| 9   | other supplier   |
+| 10  | healthy facility |
+| 11  | vht              |
 
 `healthy facility` is the source backup's spelling. The API manages permissions for these roles; it does not expose role creation, renaming, or deletion.
 
 ## Permission policy
 
-| Permission | Capability |
-| --- | --- |
-| `users:read` | List and read account records |
+| Permission     | Capability                                    |
+| -------------- | --------------------------------------------- |
+| `users:read`   | List and read account records                 |
 | `users:create` | Create accounts, together with `roles:assign` |
-| `users:update` | Activate or disable accounts |
-| `roles:read` | List roles and available permission codes |
-| `roles:assign` | Assign user roles, including admin |
-| `roles:manage` | Replace a non-admin role's permissions |
+| `users:update` | Activate or disable accounts                  |
+| `roles:read`   | List roles and available permission codes     |
+| `roles:assign` | Assign user roles, including admin            |
+| `roles:manage` | Replace a non-admin role's permissions        |
 
 Admin starts with all six permissions. Other roles initially have no management permissions; every active account can still read its own profile. Role names alone do not grant additional domain access. Inventory, orders, facilities, and organization-scoped policies are not implemented yet.
 
@@ -50,11 +50,11 @@ Admin starts with all six permissions. Other roles initially have no management 
 
 ## Routes and middleware
 
-| Method | Route | Required permission |
-| --- | --- | --- |
-| GET | `/api/v1/roles` | `roles:read` |
-| GET | `/api/v1/permissions` | `roles:read` |
-| PUT | `/api/v1/roles/{id}/permissions` | `roles:manage` |
+| Method | Route                            | Required permission |
+| ------ | -------------------------------- | ------------------- |
+| GET    | `/api/v1/roles`                  | `roles:read`        |
+| GET    | `/api/v1/permissions`            | `roles:read`        |
+| PUT    | `/api/v1/roles/{id}/permissions` | `roles:manage`      |
 
 All routes require a valid JWT and an active account. `RequirePermission` reads `PermissionHolder` from the current-user local and returns 403 unless the permission is present. RBAC does not import auth or users; users implements the interface.
 

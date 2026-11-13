@@ -10,13 +10,13 @@ Run all commands from the repository root. `ENVIRONMENT=dev` is the default. Sel
 
 Every service has `Dockerfile.dev` and `Dockerfile.prod` under `infra/docker/<service>/`:
 
-| Service | Development | Production |
-| --- | --- | --- |
-| backend | Go toolchain, Air reloads, mounted source/docs, module/build caches | Compiled binary and bundled API docs, nonroot runtime |
-| frontend | Next.js dev server, mounted source, dependency/build volumes | Standalone Next.js server, Node user, built assets |
-| mobile | Expo Metro, mounted source, dependency volume | Optional iOS/Android JavaScript artifact export job |
-| postgres | PostgreSQL 16, localhost database port | PostgreSQL 16, internal database port only |
-| nginx | Mounted development config, HTTP and Metro listeners | Baked configuration, HTTP listener only |
+| Service  | Development                                                         | Production                                            |
+| -------- | ------------------------------------------------------------------- | ----------------------------------------------------- |
+| backend  | Go toolchain, Air reloads, mounted source/docs, module/build caches | Compiled binary and bundled API docs, nonroot runtime |
+| frontend | Next.js dev server, mounted source, dependency/build volumes        | Standalone Next.js server, Node user, built assets    |
+| mobile   | Expo Metro, mounted source, dependency volume                       | Optional iOS/Android JavaScript artifact export job   |
+| postgres | PostgreSQL 16, localhost database port                              | PostgreSQL 16, internal database port only            |
+| nginx    | Mounted development config, HTTP and Metro listeners                | Baked configuration, HTTP listener only               |
 
 Both PostgreSQL Dockerfiles intentionally use the same upstream image. Runtime configuration belongs in Compose. Images are tagged `clims-<service>:dev` or `clims-<service>:prod`.
 

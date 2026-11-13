@@ -44,6 +44,9 @@ help:
 	@echo "  General:"
 	@echo "    make clean           - Remove build binaries and artifacts"
 	@echo "    make test            - Run backend tests"
+	@echo "    make lint            - Run Go, web, mobile, and Python linters"
+	@echo "    make format          - Format Go, Python, web/mobile, and documentation"
+	@echo "    make format-check    - Check formatting without modifying files"
 	@echo "    make check-stack     - Verify selected environment routes (dev includes Metro)"
 	@echo "    make check-environments - Verify dev/prod Docker and Compose conventions"
 	@echo "    make docs-check      - Validate OpenAPI, documentation links, and Swagger assets"
@@ -166,3 +169,20 @@ mobile-export-run:
 .PHONY: check-environments
 check-environments:
 	python3 scripts/check_environments.py
+
+.PHONY: lint format format-check
+lint:
+	cd backend && go vet ./...
+	cd frontend && npm run lint -- --max-warnings=0
+	cd mobile && npm run lint -- --max-warnings=0
+	python3 -m ruff check scripts
+
+format:
+	npm run format
+	python3 -m ruff format scripts
+	gofmt -w backend
+
+format-check:
+	npm run format:check
+	python3 -m ruff format --check scripts
+	@test -z "$$(gofmt -l backend)" || (gofmt -l backend; exit 1)

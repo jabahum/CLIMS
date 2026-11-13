@@ -7,6 +7,6 @@ window.addEventListener("load", function () {
     validatorUrl: null,
     supportedSubmitMethods: ["get", "post", "put", "patch", "delete"],
     presets: [SwaggerUIBundle.presets.apis],
-    layout: "BaseLayout"
+    layout: "BaseLayout",
   });
 });

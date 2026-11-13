@@ -6,19 +6,19 @@
 
 All routes use `/api/v1`. Login and registration are public; all other endpoints require `Authorization: Bearer <token>`.
 
-| Method | Path | Access |
-| --- | --- | --- |
-| POST | `/auth/register` | Public, creates an active account with no assigned role |
-| POST | `/auth/login` | Public, returns a 24-hour JWT and account profile |
-| GET | `/auth/me` | Any active account, including unassigned accounts |
-| GET | `/users?limit=50&offset=0` | `users:read` (limit 1–100) |
-| GET | `/users/:id` | `users:read` |
-| POST | `/users` | Both `users:create` and `roles:assign` |
-| PATCH | `/users/:id/role` | `roles:assign` |
-| PATCH | `/users/:id/status` | `users:update` |
-| GET | `/roles` | `roles:read` |
-| GET | `/permissions` | `roles:read` |
-| PUT | `/roles/:id/permissions` | `roles:manage` |
+| Method | Path                       | Access                                                  |
+| ------ | -------------------------- | ------------------------------------------------------- |
+| POST   | `/auth/register`           | Public, creates an active account with no assigned role |
+| POST   | `/auth/login`              | Public, returns a 24-hour JWT and account profile       |
+| GET    | `/auth/me`                 | Any active account, including unassigned accounts       |
+| GET    | `/users?limit=50&offset=0` | `users:read` (limit 1–100)                              |
+| GET    | `/users/:id`               | `users:read`                                            |
+| POST   | `/users`                   | Both `users:create` and `roles:assign`                  |
+| PATCH  | `/users/:id/role`          | `roles:assign`                                          |
+| PATCH  | `/users/:id/status`        | `users:update`                                          |
+| GET    | `/roles`                   | `roles:read`                                            |
+| GET    | `/permissions`             | `roles:read`                                            |
+| PUT    | `/roles/:id/permissions`   | `roles:manage`                                          |
 
 Registration accepts `username`, `email`, `password`, and optional `firstname`, `lastname`, and `phone_number`. Passwords require at least 8 characters and at most 72 UTF-8 bytes. Unknown JSON fields are rejected, including attempts to supply a role or status during public registration. Email uniqueness is case-insensitive. Existing nonunique usernames are preserved.
 

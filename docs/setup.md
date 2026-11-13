@@ -40,7 +40,6 @@ If Docker reports a permission error under `~/.docker/buildx/refs` (a root-owned
 BUILDX_CONFIG=/tmp/clims-buildx make docker-up
 ```
 
-
 See [web/mobile and physical-device setup](clients.md), [PostgreSQL](postgresql.md), [modules](modules/README.md), and [API documentation](api/README.md) for the remaining setup and usage details.
 
 Swagger UI is served by the API at `/docs/`. `DOCS_DIR` defaults to `../docs` for local Go execution and is set to `/app/docs` in the Docker image. See [API documentation](api/README.md) for standalone binary deployments.

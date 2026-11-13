@@ -4,20 +4,20 @@
 
 Source: `backend/internal/features/auth/`.
 
-| File | Responsibility |
-| --- | --- |
-| `dto.go` | Signup and login request shapes; signup embeds `users.AccountInput` |
-| `handler.go` | Registration validation, credential checking, token issuance, own-profile response |
-| `routes.go` | Auth routes and per-process rate limiting |
-| `handler_test.go` | Login-attempt rate-limit regression test |
+| File              | Responsibility                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `dto.go`          | Signup and login request shapes; signup embeds `users.AccountInput`                |
+| `handler.go`      | Registration validation, credential checking, token issuance, own-profile response |
+| `routes.go`       | Auth routes and per-process rate limiting                                          |
+| `handler_test.go` | Login-attempt rate-limit regression test                                           |
 
 ## Endpoints
 
-| Method | Route | Access |
-| --- | --- | --- |
-| POST | `/api/v1/auth/register` | Public; active, unassigned account |
-| POST | `/api/v1/auth/login` | Public; valid credentials and active account |
-| GET | `/api/v1/auth/me` | Valid JWT and active account |
+| Method | Route                   | Access                                       |
+| ------ | ----------------------- | -------------------------------------------- |
+| POST   | `/api/v1/auth/register` | Public; active, unassigned account           |
+| POST   | `/api/v1/auth/login`    | Public; valid credentials and active account |
+| GET    | `/api/v1/auth/me`       | Valid JWT and active account                 |
 
 Registration trims usernames, trims and lowercases emails, rejects unknown fields, validates request fields, and delegates hashing and persistence to the users service. Clients cannot provide `role`, `role_id`, or `status`. The response contains `data.user_id`; registration does not issue a token.
 

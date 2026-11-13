@@ -33,9 +33,7 @@
   "paths": {
     "/api/v1/auth/register": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "operationId": "register",
         "summary": "Register an unassigned account",
         "description": "Creates an active account with no assigned role. Role and status fields are rejected. Limited to 10 requests per IP per minute.",
@@ -81,9 +79,7 @@
     },
     "/api/v1/auth/login": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "operationId": "login",
         "summary": "Log in",
         "description": "Returns a 24-hour HS256 JWT and the current account profile. Limited to 10 failed attempts per IP per minute. Successful requests do not consume the limit.",
@@ -132,9 +128,7 @@
     },
     "/api/v1/auth/me": {
       "get": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "operationId": "getProfile",
         "summary": "Get the current profile",
         "description": "Any active account can read its own profile, including accounts with no assigned role. Status and permissions are reloaded from PostgreSQL.",
@@ -163,9 +157,7 @@
     },
     "/api/v1/users": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "operationId": "listUsers",
         "summary": "List users",
         "description": "List users Requires all permissions: users:read.",
@@ -193,9 +185,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "users:read"
-        ],
+        "x-required-permissions": ["users:read"],
         "parameters": [
           {
             "name": "limit",
@@ -219,9 +209,7 @@
         ]
       },
       "post": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "operationId": "createUser",
         "summary": "Create a user with a role",
         "description": "Create a user with a role Requires all permissions: users:create, roles:assign.",
@@ -255,10 +243,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "users:create",
-          "roles:assign"
-        ],
+        "x-required-permissions": ["users:create", "roles:assign"],
         "requestBody": {
           "required": true,
           "content": {
@@ -273,9 +258,7 @@
     },
     "/api/v1/users/{id}": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "operationId": "getUser",
         "summary": "Get a user",
         "description": "Get a user Requires all permissions: users:read.",
@@ -306,9 +289,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "users:read"
-        ],
+        "x-required-permissions": ["users:read"],
         "parameters": [
           {
             "name": "id",
@@ -325,9 +306,7 @@
     },
     "/api/v1/users/{id}/role": {
       "patch": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "operationId": "assignRole",
         "summary": "Assign a user role",
         "description": "Assigns an existing CLIMS role. Changes affect the next protected request. Demoting the last active admin is rejected. Requires all permissions: roles:assign.",
@@ -364,9 +343,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "roles:assign"
-        ],
+        "x-required-permissions": ["roles:assign"],
         "requestBody": {
           "required": true,
           "content": {
@@ -393,9 +370,7 @@
     },
     "/api/v1/users/{id}/status": {
       "patch": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "operationId": "updateStatus",
         "summary": "Activate or disable a user",
         "description": "Disabled accounts cannot log in or use existing JWTs. Disabling the last active admin is rejected. Requires all permissions: users:update.",
@@ -432,9 +407,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "users:update"
-        ],
+        "x-required-permissions": ["users:update"],
         "requestBody": {
           "required": true,
           "content": {
@@ -461,9 +434,7 @@
     },
     "/api/v1/roles": {
       "get": {
-        "tags": [
-          "RBAC"
-        ],
+        "tags": ["RBAC"],
         "operationId": "listRoles",
         "summary": "List roles and their permissions",
         "description": "List roles and their permissions Requires all permissions: roles:read.",
@@ -488,16 +459,12 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "roles:read"
-        ]
+        "x-required-permissions": ["roles:read"]
       }
     },
     "/api/v1/roles/{id}/permissions": {
       "put": {
-        "tags": [
-          "RBAC"
-        ],
+        "tags": ["RBAC"],
         "operationId": "setPermissions",
         "summary": "Replace a role permission set",
         "description": "Replaces permissions atomically. Unknown codes roll back the update. Role 1 (admin) is immutable. Changes affect the next protected request. Requires all permissions: roles:manage.",
@@ -534,9 +501,7 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "roles:manage"
-        ],
+        "x-required-permissions": ["roles:manage"],
         "requestBody": {
           "required": true,
           "content": {
@@ -563,9 +528,7 @@
     },
     "/api/v1/permissions": {
       "get": {
-        "tags": [
-          "RBAC"
-        ],
+        "tags": ["RBAC"],
         "operationId": "listPermissions",
         "summary": "List supported permission codes",
         "description": "List supported permission codes Requires all permissions: roles:read.",
@@ -590,16 +553,12 @@
             "$ref": "#/components/responses/InternalError"
           }
         },
-        "x-required-permissions": [
-          "roles:read"
-        ]
+        "x-required-permissions": ["roles:read"]
       }
     },
     "/health/live": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "operationId": "liveness",
         "summary": "Check process liveness",
         "description": "Check process liveness",
@@ -620,9 +579,7 @@
     },
     "/health/ready": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "operationId": "readiness",
         "summary": "Check PostgreSQL readiness",
         "description": "Pings PostgreSQL with a three-second timeout; returns 503 if the database is unreachable.",
@@ -658,11 +615,7 @@
       "RegisterRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "username",
-          "email",
-          "password"
-        ],
+        "required": ["username", "email", "password"],
         "properties": {
           "username": {
             "type": "string",
@@ -703,12 +656,7 @@
       "CreateUserRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "username",
-          "email",
-          "password",
-          "role_id"
-        ],
+        "required": ["username", "email", "password", "role_id"],
         "properties": {
           "username": {
             "type": "string",
@@ -756,10 +704,7 @@
       "LoginRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "email",
-          "password"
-        ],
+        "required": ["email", "password"],
         "properties": {
           "email": {
             "type": "string",
@@ -781,9 +726,7 @@
       "AssignRoleRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "role_id"
-        ],
+        "required": ["role_id"],
         "properties": {
           "role_id": {
             "type": "integer",
@@ -796,25 +739,18 @@
       "UpdateStatusRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "disabled"
-            ]
+            "enum": ["active", "disabled"]
           }
         }
       },
       "SetPermissionsRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "permissions"
-        ],
+        "required": ["permissions"],
         "properties": {
           "permissions": {
             "type": "array",
@@ -836,11 +772,7 @@
       },
       "Role": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "permissions"
-        ],
+        "required": ["id", "name", "permissions"],
         "properties": {
           "id": {
             "type": "integer",
@@ -913,16 +845,11 @@
       },
       "Error": {
         "type": "object",
-        "required": [
-          "success",
-          "message"
-        ],
+        "required": ["success", "message"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              false
-            ]
+            "enum": [false]
           },
           "message": {
             "type": "string"
@@ -944,9 +871,7 @@
       },
       "JWTError": {
         "type": "object",
-        "required": [
-          "error"
-        ],
+        "required": ["error"],
         "properties": {
           "error": {
             "type": "string",
@@ -956,16 +881,11 @@
       },
       "MessageResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message"
-        ],
+        "required": ["success", "message"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -974,11 +894,7 @@
       },
       "NullableRole": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "permissions"
-        ],
+        "required": ["id", "name", "permissions"],
         "properties": {
           "id": {
             "type": "integer",
@@ -1010,26 +926,18 @@
       },
       "CreatedUserResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
           },
           "data": {
             "type": "object",
-            "required": [
-              "user_id"
-            ],
+            "required": ["user_id"],
             "properties": {
               "user_id": {
                 "type": "integer",
@@ -1042,17 +950,11 @@
       },
       "UserResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -1064,44 +966,29 @@
       },
       "LoginResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
           },
           "data": {
             "type": "object",
-            "required": [
-              "token",
-              "token_type",
-              "expires_in",
-              "user"
-            ],
+            "required": ["token", "token_type", "expires_in", "user"],
             "properties": {
               "token": {
                 "type": "string"
               },
               "token_type": {
                 "type": "string",
-                "enum": [
-                  "Bearer"
-                ]
+                "enum": ["Bearer"]
               },
               "expires_in": {
                 "type": "integer",
-                "enum": [
-                  86400
-                ]
+                "enum": [86400]
               },
               "user": {
                 "$ref": "#/components/schemas/User"
@@ -1112,28 +999,18 @@
       },
       "UsersResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
           },
           "data": {
             "type": "object",
-            "required": [
-              "users",
-              "limit",
-              "offset"
-            ],
+            "required": ["users", "limit", "offset"],
             "properties": {
               "users": {
                 "type": "array",
@@ -1156,17 +1033,11 @@
       },
       "RolesResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -1181,17 +1052,11 @@
       },
       "PermissionsResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
@@ -1214,29 +1079,18 @@
       },
       "LivenessResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
           },
           "data": {
             "type": "object",
-            "required": [
-              "status",
-              "version",
-              "commit_hash",
-              "build_time"
-            ],
+            "required": ["status", "version", "commit_hash", "build_time"],
             "properties": {
               "status": {
                 "type": "string"
@@ -1256,28 +1110,18 @@
       },
       "ReadinessResponse": {
         "type": "object",
-        "required": [
-          "success",
-          "message",
-          "data"
-        ],
+        "required": ["success", "message", "data"],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [
-              true
-            ]
+            "enum": [true]
           },
           "message": {
             "type": "string"
           },
           "data": {
             "type": "object",
-            "required": [
-              "database",
-              "status",
-              "version"
-            ],
+            "required": ["database", "status", "version"],
             "properties": {
               "database": {
                 "type": "string"

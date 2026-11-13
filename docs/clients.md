@@ -6,10 +6,10 @@ The branch scaffolds clients and the gateway; it does not add login or user-mana
 
 ## Projects and toolchains
 
-| Folder | Project | Current baseline |
-| --- | --- | --- |
-| `frontend/` | Next.js App Router, TypeScript, React | Next.js 16.4.6, React 19.3 |
-| `mobile/` | Expo / React Native, TypeScript | Expo SDK 58, React Native 0.88.1, React 19.3 |
+| Folder      | Project                               | Current baseline                             |
+| ----------- | ------------------------------------- | -------------------------------------------- |
+| `frontend/` | Next.js App Router, TypeScript, React | Next.js 16.4.6, React 19.3                   |
+| `mobile/`   | Expo / React Native, TypeScript       | Expo SDK 58, React Native 0.88.1, React 19.3 |
 
 Use Node.js 22.13+ on the 22.x line (or another version supported by Expo SDK 58) for host development. Docker supplies Node.js 22. With nvm, run `nvm install` and `nvm use` from the repository root; `.nvmrc` selects Node 22. Both projects use npm and committed lockfiles. Keep application documentation in root `docs/`; the generated `AGENTS.md` files provide tool-specific project instructions.
 
@@ -27,14 +27,14 @@ For custom gateway ports, run the checker with matching `STACK_URL` and `METRO_U
 
 On this workstation, use `BUILDX_CONFIG=/tmp/clims-buildx make docker-up` if Docker's existing buildx metadata is root-owned.
 
-| Service | Container port | Host access |
-| --- | --- | --- |
-| Nginx HTTP gateway | 80 | `http://localhost:8080` |
-| Nginx Metro gateway | 8081 | `http://localhost:19000` |
-| Next.js | 3000 | Internal, through Nginx |
-| Go API | 8080 | Internal, through Nginx |
-| Expo Metro | 8081 | Internal, through Nginx |
-| PostgreSQL | 5432 | `localhost:5432` for local database tools |
+| Service             | Container port | Host access                               |
+| ------------------- | -------------- | ----------------------------------------- |
+| Nginx HTTP gateway  | 80             | `http://localhost:8080`                   |
+| Nginx Metro gateway | 8081           | `http://localhost:19000`                  |
+| Next.js             | 3000           | Internal, through Nginx                   |
+| Go API              | 8080           | Internal, through Nginx                   |
+| Expo Metro          | 8081           | Internal, through Nginx                   |
+| PostgreSQL          | 5432           | `localhost:5432` for local database tools |
 
 Nginx routes `/` and Next.js assets to the frontend; `/api`, `/docs`, and `/health` retain their full paths and go to Go. A separate Nginx listener proxies Metro's root paths and WebSocket upgrades. Docker DNS resolution lets the proxy refresh upstream addresses after container recreation.
 

@@ -18,9 +18,6 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "platforms": [
-      "ios",
-      "android"
-    ]
+    "platforms": ["ios", "android"]
   }
 }
