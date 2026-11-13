@@ -6,6 +6,8 @@ See [CI checks and formatting](ci.md) for pull request/main checks and local ver
 
 See [service image releases](releases.md) for GHCR builds, version tags, and digest-pinned deployments.
 
+See [creating PostgreSQL migrations](migrations.md) for pinned CLI scaffolding, SQL authoring, testing, and deployment.
+
 | Guide                                    | Purpose                                                                          |
 | ---------------------------------------- | -------------------------------------------------------------------------------- |
 | [Setup](setup.md)                        | Start the stack, configure environments, and run the API locally                 |
