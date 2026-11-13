@@ -1,0 +1,78 @@
+name: clims
+
+services:
+  postgres:
+    image: clims-postgres:dev
+    build:
+      context: ../..
+      dockerfile: infra/docker/postgres/Dockerfile.dev
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+
+  backend:
+    image: clims-backend:dev
+    build:
+      context: ../..
+      dockerfile: infra/docker/backend/Dockerfile.dev
+    volumes:
+      - ../../backend:/app/backend
+      - ../../docs:/app/docs:ro
+      - backend_go_mod:/go/pkg/mod
+      - backend_go_build:/root/.cache/go-build
+
+  frontend:
+    image: clims-frontend:dev
+    build:
+      context: ../../frontend
+      dockerfile: ../infra/docker/frontend/Dockerfile.dev
+    environment:
+      BACKEND_URL: http://backend:8080
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ../../frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+
+  mobile:
+    image: clims-mobile:dev
+    build:
+      context: ../../mobile
+      dockerfile: ../infra/docker/mobile/Dockerfile.dev
+    environment:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:8080/api/v1}
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${MOBILE_HOST:-localhost}
+      EXPO_PACKAGER_PROXY_URL: http://${MOBILE_HOST:-localhost}:${METRO_PORT:-19000}
+    expose: ["8081"]
+    volumes:
+      - ../../mobile:/app
+      - mobile_node_modules:/app/node_modules
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/status').then(async r=>{if(!r.ok||!(await r.text()).includes('packager-status:running'))process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+
+  nginx:
+    image: clims-nginx:dev
+    build:
+      context: ../..
+      dockerfile: infra/docker/nginx/Dockerfile.dev
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${METRO_PORT:-19000}:8081"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/app.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      mobile:
+        condition: service_healthy
+
+volumes:
+  backend_go_mod:
+  backend_go_build:
+  frontend_node_modules:
+  frontend_next:
+  mobile_node_modules:

@@ -5,6 +5,7 @@ The documentation source is this repository's root `docs/` folder. The root READ
 | Guide | Purpose |
 | --- | --- |
 | [Setup](setup.md) | Start the stack, configure environments, and run the API locally |
+| [Environments](environments.md) | Development reloads, production images, Compose selection, and mobile exports |
 | [Web and mobile](clients.md) | Next.js, Expo, Nginx routing, and device setup |
 | [PostgreSQL](postgresql.md) | Migrations, legacy imports, and data verification |
 | [Module architecture](modules/README.md) | Ownership, dependencies, request flow, and extension rules |

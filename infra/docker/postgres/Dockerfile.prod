@@ -1,0 +1,2 @@
+FROM postgres:16-alpine
+# Database credentials, storage, and host access belong to the Compose environment.

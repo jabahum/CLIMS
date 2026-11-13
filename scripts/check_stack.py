@@ -24,7 +24,12 @@ except HTTPError as error:
     assert error.code == 401, 'API route did not reach JWT middleware'
 else:
     raise AssertionError('Profile route accepted a request without a token')
-assert 'packager-status:running' in get(metro + '/status').decode()
-manifest = json.loads(get(metro + '/', {'Accept': 'application/expo+json', 'Expo-Platform': 'android'}))
-assert 'launchAsset' in manifest, 'Expo did not return a native application manifest'
-print('PASS: Nginx serves Next.js, API readiness, Swagger, authenticated API protection, and the Expo Metro manifest.')
+environment = os.getenv('STACK_ENV', 'dev')
+if environment not in ('dev', 'prod'):
+    raise ValueError('STACK_ENV must be dev or prod')
+if environment == 'dev':
+    assert 'packager-status:running' in get(metro + '/status').decode()
+    manifest = json.loads(get(metro + '/', {'Accept': 'application/expo+json', 'Expo-Platform': 'android'}))
+    assert 'launchAsset' in manifest, 'Expo did not return a native application manifest'
+print(f'PASS: {environment} Nginx gateway serves Next.js, API readiness, Swagger, and authenticated API protection.'
+      + (' Expo Metro manifest is available.' if environment == 'dev' else ''))

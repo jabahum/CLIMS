@@ -1,0 +1,20 @@
+root = "."
+tmp_dir = "/tmp/clims-air"
+
+[build]
+cmd = "go build -o /tmp/clims-air/server ./cmd/server"
+bin = "/tmp/clims-air/server"
+include_ext = ["go", "sql", "toml"]
+exclude_dir = ["bin", "tmp", "vendor"]
+delay = 1000
+stop_on_error = true
+send_interrupt = true
+kill_delay = "500ms"
+poll = true
+poll_interval = 1000
+
+[log]
+time = true
+
+[misc]
+clean_on_exit = true

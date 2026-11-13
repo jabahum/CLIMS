@@ -4,7 +4,7 @@
 
 ## Start locally
 
-Requires Docker Desktop with Compose v2 (`include` support requires v2.20+). Run commands from the repository root:
+Requires Docker Desktop with Compose v2. Run commands from the repository root:
 
 ```sh
 make setup
@@ -32,7 +32,7 @@ make run-backend       # requires Go 1.26+, loads the environment file
 make test              # backend tests
 ```
 
-Use `ENV_FILE=infra/env/prod.env` to select another environment file. Copy `infra/env/prod.env.example` and replace its credentials first. For an external PostgreSQL server, run the backend with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, and `JWT_SECRET` set. Set `DB_SSLMODE` for the server's TLS policy. The local Compose database uses `disable` on its private container network.
+Select production with `ENVIRONMENT=prod`, which selects both its Compose override and environment file. `ENV_FILE` only overrides the variables file; it does not select Dockerfiles or service behavior. See [environment configuration](environments.md) for production startup and mobile exports. For an external PostgreSQL server, run the backend with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, and `JWT_SECRET` set. Set `DB_SSLMODE` for the server's TLS policy. The local Compose database uses `disable` on its private container network.
 
 If Docker reports a permission error under `~/.docker/buildx/refs` (a root-owned buildx directory on this workstation), use a writable buildx configuration:
 
