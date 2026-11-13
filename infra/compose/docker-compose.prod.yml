@@ -1,0 +1,43 @@
+# Separate project name keeps production resources isolated from development.
+name: clims-prod
+
+services:
+  postgres:
+    image: clims-postgres:prod
+    build:
+      context: ../..
+      dockerfile: infra/docker/postgres/Dockerfile.prod
+
+  backend:
+    image: clims-backend:prod
+    build:
+      context: ../..
+      dockerfile: infra/docker/backend/Dockerfile.prod
+      args:
+        VERSION: ${VERSION:-1.0.0}
+        COMMIT_HASH: ${COMMIT_HASH:-unknown}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
+
+  frontend:
+    image: clims-frontend:prod
+    build:
+      context: ../../frontend
+      dockerfile: ../infra/docker/frontend/Dockerfile.prod
+
+  nginx:
+    image: clims-nginx:prod
+    build:
+      context: ../..
+      dockerfile: infra/docker/nginx/Dockerfile.prod
+
+  mobile:
+    profiles: ["artifacts"]
+    image: clims-mobile:prod
+    build:
+      context: ../../mobile
+      dockerfile: ../infra/docker/mobile/Dockerfile.prod
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-}
+    volumes:
+      - ../../artifacts/mobile:/artifacts
+    restart: "no"

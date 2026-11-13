@@ -40,9 +40,9 @@ Nginx routes `/` and Next.js assets to the frontend; `/api`, `/docs`, and `/heal
 
 The startup sequence waits for PostgreSQL, then the API, then Next.js; Nginx waits for the API, frontend, and Metro health checks. The PostgreSQL named volume is preserved. The API is no longer published directly on host port 8080: Nginx owns that port.
 
-The Next.js container runs a production standalone build as the Node user. Rebuild it after editing source. Metro is a development server with `mobile/` mounted for reloads; its Linux dependencies live in the separate `mobile_node_modules` volume. If mobile dependency inputs change, rebuild the mobile image, refresh the dependency volume with `docker compose --env-file infra/env/dev.env -f infra/compose/docker-compose.yml exec mobile npm ci`, then restart the mobile service. This updates only mobile dependencies; the PostgreSQL volume remains intact.
+Development runs Next.js with source reloads, Go with Air, and Expo Metro. Source folders are mounted; dependencies and build caches live in named volumes. Client startup runs `npm ci --prefer-offline` so dependencies follow the committed lockfiles after a restart. Rebuild the relevant image after changing Dockerfiles or toolchains.
 
-This default stack is for local integration and includes Metro. Native application binaries are built and installed separately; a mobile app does not run inside a Docker container. Production deployment needs its own native release build and gateway/TLS configuration.
+Production runs a standalone Next.js build and compiled Go binary. Its mobile Dockerfile exports release JavaScript bundles as an optional job; it runs no Metro server. See [development and production environments](environments.md) for configuration, release artifacts, and commands.
 
 ## Web development
 
@@ -53,7 +53,7 @@ make run-frontend
 
 Open `http://localhost:3000`. Next.js rewrites `/api`, `/docs`, and `/health` to `BACKEND_URL`, defaulting to the Nginx gateway at `http://localhost:8080`. Copy `frontend/.env.example` to `frontend/.env.local` to change it. Browser API calls use relative paths; no private database credentials are bundled into the client.
 
-`infra/docker/frontend/Dockerfile.dev` is available for a future development override; the default Compose service uses the standalone production image. The build uses system fonts and does not download Google Fonts.
+The development Compose override uses `infra/docker/frontend/Dockerfile.dev`; production uses `Dockerfile.prod`. The web app uses system fonts and does not download Google Fonts.
 
 ```sh
 make check-frontend

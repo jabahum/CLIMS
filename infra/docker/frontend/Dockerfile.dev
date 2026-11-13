@@ -1,8 +1,10 @@
 FROM node:22-alpine
 WORKDIR /app
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
 EXPOSE 3000
-CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
+# Refresh the dependency volume when a source-mounted lockfile changes.
+CMD ["sh", "-c", "npm ci --prefer-offline && exec npm run dev -- --hostname 0.0.0.0"]

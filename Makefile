@@ -1,7 +1,11 @@
 .PHONY: help build-backend run-backend build-frontend run-frontend install-frontend docker-up docker-down docker-build clean test
 
-ENV_FILE ?= infra/env/dev.env
-COMPOSE = docker compose --env-file $(ENV_FILE) -f infra/compose/docker-compose.yml
+ENVIRONMENT ?= dev
+ifeq ($(filter $(ENVIRONMENT),dev prod),)
+$(error ENVIRONMENT must be dev or prod)
+endif
+ENV_FILE ?= infra/env/$(ENVIRONMENT).env
+COMPOSE = docker compose --env-file $(ENV_FILE) -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.$(ENVIRONMENT).yml
 
 # Project variables
 VERSION ?= 1.0.0
@@ -25,7 +29,10 @@ help:
 	@echo "    make check-mobile    - Lint and type-check the mobile project"
 	@echo ""
 	@echo "  Docker Compose:"
-	@echo "    make docker-up       - Start PostgreSQL, API, web, Metro, and Nginx"
+	@echo "    make docker-up       - Start the selected ENVIRONMENT (default: dev)"
+	@echo "    make dev-up/prod-up   - Start the development or production stack"
+	@echo "    make compose-config  - Validate the selected Compose configuration"
+	@echo "    make mobile-export   - Export production mobile JavaScript artifacts"
 	@echo "    make docker-down     - Stop and remove Docker Compose containers"
 	@echo "    make docker-build    - Rebuild and start the Docker stack"
 	@echo ""
@@ -37,7 +44,8 @@ help:
 	@echo "  General:"
 	@echo "    make clean           - Remove build binaries and artifacts"
 	@echo "    make test            - Run backend tests"
-	@echo "    make check-stack     - Verify Nginx routes, API readiness, and Metro"
+	@echo "    make check-stack     - Verify selected environment routes (dev includes Metro)"
+	@echo "    make check-environments - Verify dev/prod Docker and Compose conventions"
 	@echo "    make docs-check      - Validate OpenAPI, documentation links, and Swagger assets"
 
 # --- Backend Targets ---
@@ -90,7 +98,7 @@ test:
 	cd backend && go test -v ./...
 .PHONY: setup db-up db-seed sql-convert
 setup:
-	@test -f $(ENV_FILE) || cp infra/env/dev.env.example $(ENV_FILE)
+	@test -f $(ENV_FILE) || cp infra/env/$(ENVIRONMENT).env.example $(ENV_FILE)
 	@echo "Environment ready: $(ENV_FILE)"
 
 db-up:
@@ -129,4 +137,32 @@ check-mobile:
 	cd mobile && npm run lint && npm run typecheck
 
 check-stack:
-	python3 scripts/check_stack.py
+	STACK_ENV=$(ENVIRONMENT) python3 scripts/check_stack.py
+
+.PHONY: dev-up prod-up dev-down prod-down compose-config mobile-export
+dev-up:
+	$(MAKE) ENVIRONMENT=dev docker-up
+
+prod-up:
+	$(MAKE) ENVIRONMENT=prod docker-up
+
+dev-down:
+	$(MAKE) ENVIRONMENT=dev docker-down
+
+prod-down:
+	$(MAKE) ENVIRONMENT=prod docker-down
+
+compose-config:
+	$(COMPOSE) config --quiet
+
+mobile-export:
+	$(MAKE) ENVIRONMENT=prod mobile-export-run
+
+.PHONY: mobile-export-run
+mobile-export-run:
+	@test "$(ENVIRONMENT)" = prod || (echo "Mobile release artifacts use ENVIRONMENT=prod"; exit 1)
+	$(COMPOSE) run --build --rm --no-deps mobile
+
+.PHONY: check-environments
+check-environments:
+	python3 scripts/check_environments.py
