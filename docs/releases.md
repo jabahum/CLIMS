@@ -2,6 +2,8 @@
 
 [Documentation index](README.md)
 
+See the [2.0.0 release notes](releases/2.0.0.md) for the revamped platform release.
+
 `.github/workflows/images.yml` builds the three application production Dockerfiles on pull requests without publishing. Pushing a version tag runs the complete [CI workflow](ci.md), publishes images to GitHub Container Registry (GHCR), and creates a GitHub Release after all three application images succeed. Normal pushes to `main` run CI; they do not publish images.
 
 ## Images and tags
@@ -10,27 +12,27 @@ Images use the repository's lowercase owner and name:
 
 | Service  | Example release image                     |
 | -------- | ----------------------------------------- |
-| backend  | `ghcr.io/mohuganda/clims/backend:v1.0.0`  |
-| frontend | `ghcr.io/mohuganda/clims/frontend:v1.0.0` |
-| mobile   | `ghcr.io/mohuganda/clims/mobile:v1.0.0`   |
+| backend  | `ghcr.io/mohuganda/clims/backend:v2.0.0`  |
+| frontend | `ghcr.io/mohuganda/clims/frontend:v2.0.0` |
+| mobile   | `ghcr.io/mohuganda/clims/mobile:v2.0.0`   |
 
 All three application images target `linux/amd64`, use production Dockerfiles, and include OCI source/version/commit labels, build provenance, and an SBOM. Builds cache each service independently. The backend receives version, commit, and timestamp build arguments. Development images are not published.
 
-Supported tags are `vMAJOR.MINOR.PATCH`, optionally followed by prerelease identifiers, such as `v1.0.0-rc.1`. Numeric version components cannot have leading zeros. Build metadata (`+build`) is not supported because it cannot be used directly as a Docker tag. Prereleases are marked as such on GitHub. There are no floating `latest`, major, or minor image aliases.
+Supported tags are `vMAJOR.MINOR.PATCH`, optionally followed by prerelease identifiers, such as `v2.0.0-rc.1`. Numeric version components cannot have leading zeros. Build metadata (`+build`) is not supported because it cannot be used directly as a Docker tag. Prereleases are marked as such on GitHub. There are no floating `latest`, major, or minor image aliases.
 
 The mobile image is an export job containing iOS and Android JavaScript bundles and assets. It does not run Metro or contain signed APK/IPA packages. Its API URL is embedded at build time; changing that URL requires a new image/version.
 
 ## Shared application version
 
-The root `VERSION` file is authoritative, initially `1.0.0`. Backend, frontend, and mobile use one application version. Package manifests and lockfiles (including root tooling), the backend default version, Expo release metadata, and OpenAPI `info.version` must agree. CI checks this on every pull request and main push; the release preflight also requires the Git tag to be exactly `v` plus `VERSION`.
+The root `VERSION` file is authoritative, currently `2.0.0`. Backend, frontend, and mobile use one application version. Package manifests and lockfiles (including root tooling), the backend default version, Expo release metadata, and OpenAPI `info.version` must agree. CI checks this on every pull request and main push; the release preflight also requires the Git tag to be exactly `v` plus `VERSION`.
 
 ```sh
-make version-set VERSION=1.1.0
+make version-set VERSION=2.1.0
 make version-check
 npm run format:check
 ```
 
-Commit the version update with the release changes and merge it into `main` before creating `v1.1.0`. `make version-set VERSION=1.1.0-rc.1` supports prereleases too. Expo's native `version` keeps the numeric base (`1.1.0`), while `expo.extra.releaseVersion` and the mobile package version retain `1.1.0-rc.1`. This respects the [Expo/iOS version format](https://docs.expo.dev/versions/v58.0.0/config/app/#version). Native build numbers and signing remain separate workflows.
+Commit the version update with the release changes and merge it into `main` before creating `v2.1.0`. `make version-set VERSION=2.1.0-rc.1` supports prereleases too. Expo's native `version` keeps the numeric base (`2.1.0`), while `expo.extra.releaseVersion` and the mobile package version retain `2.1.0-rc.1`. This respects the [Expo/iOS version format](https://docs.expo.dev/versions/v58.0.0/config/app/#version). Native build numbers and signing remain separate workflows.
 
 Image tags and OCI labels include the `v` prefix; application versions omit it. PR image tags use `pr-<number>` while the embedded application version remains the value in `VERSION`. Production Dockerfiles reject mismatching version build arguments; the backend defaults to the copied `VERSION` file and client images default to their checked package metadata. The Makefile reads `VERSION` for local builds too.
 
@@ -49,8 +51,8 @@ Merge the workflow and service changes into the publishing repository's `main` f
 ```sh
 git switch main
 git pull --ff-only origin main
-git tag -a v1.0.0 -m 'Release v1.0.0'
-git push origin v1.0.0
+git tag -a v2.0.0 -m 'Release v2.0.0'
+git push origin v2.0.0
 ```
 
 Use the next unused version; the example does not select a version automatically. A release tag must point to a commit reachable from `main`. The workflow rejects tags with an existing GitHub Release. Do not move published tags. Use a new version for changed code or build configuration.
@@ -67,22 +69,22 @@ Image uploads are separate registry operations. If one fails, some images may al
 Create `infra/env/prod.env` with deployment credentials as described in [environments](environments.md). Download the release assets, replacing the repository and version as needed:
 
 ```sh
-gh release download v1.0.0 --repo mohuganda/CLIMS \
+gh release download v2.0.0 --repo mohuganda/CLIMS \
   --pattern images.env --pattern images.json \
-  --dir artifacts/release/v1.0.0
+  --dir artifacts/release/v2.0.0
 
 docker compose --env-file infra/env/prod.env \
-  --env-file artifacts/release/v1.0.0/images.env \
+  --env-file artifacts/release/v2.0.0/images.env \
   -f infra/compose/docker-compose.yml \
   -f infra/compose/docker-compose.prod.yml build postgres nginx
 
 docker compose --env-file infra/env/prod.env \
-  --env-file artifacts/release/v1.0.0/images.env \
+  --env-file artifacts/release/v2.0.0/images.env \
   -f infra/compose/docker-compose.yml \
   -f infra/compose/docker-compose.prod.yml pull backend frontend
 
 docker compose --env-file infra/env/prod.env \
-  --env-file artifacts/release/v1.0.0/images.env \
+  --env-file artifacts/release/v2.0.0/images.env \
   -f infra/compose/docker-compose.yml \
   -f infra/compose/docker-compose.prod.yml up -d --no-build --wait
 ```

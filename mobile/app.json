@@ -2,7 +2,7 @@
   "expo": {
     "name": "CLIMS Mobile",
     "slug": "clims-mobile",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
     },
     "platforms": ["ios", "android"],
     "extra": {
-      "releaseVersion": "1.0.0"
+      "releaseVersion": "2.0.0"
     }
   }
 }

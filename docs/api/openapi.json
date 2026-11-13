@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "CLIMS API",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Current Go/Fiber API for authentication, users, RBAC, and health. All protected operations require a Bearer JWT and an active account. Permission codes are application permissions, not OAuth scopes. Limits are per backend process. Public signup never assigns a role."
   },
   "servers": [
