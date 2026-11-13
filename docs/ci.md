@@ -4,6 +4,8 @@
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`. It uses read-only repository permissions and requires no repository secrets. A newer run on the same ref cancels the older run.
 
+The workflow is also reusable by [tagged image releases](releases.md), which run the same checks before publishing. The quality job checks shared application version consistency and tests release version validation and digest manifest assembly. A separate image workflow builds the three application production Dockerfiles on pull requests without publishing.
+
 | Check                           | Coverage                                                                                                                    |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Formatting, docs, and Compose   | Prettier, Python Ruff lint/format, documentation links, vendored Swagger checksums, OpenAPI schema, and both Compose models |
@@ -35,6 +37,7 @@ make check-mobile
 npm --prefix frontend run build
 CI=1 EXPO_PUBLIC_API_URL=https://example.invalid/api/v1 npm --prefix mobile run export
 python scripts/check_docs.py
+python -m unittest discover -s scripts -p 'test_*.py'
 python -m openapi_spec_validator docs/api/openapi.json
 make check-environments
 ```

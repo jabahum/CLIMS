@@ -1,5 +1,6 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
+ARG VERSION
 ENV CI=1
 ENV EXPO_NO_TELEMETRY=1
 ARG EXPO_PUBLIC_API_URL
@@ -7,6 +8,7 @@ ENV EXPO_PUBLIC_API_URL=${EXPO_PUBLIC_API_URL}
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+RUN test -z "$VERSION" || test "$VERSION" = "$(node -p "require('./package.json').version")"
 RUN test -n "$EXPO_PUBLIC_API_URL" && npm run export
 
 # Production mobile is an artifact job, not a Metro server or native runtime.

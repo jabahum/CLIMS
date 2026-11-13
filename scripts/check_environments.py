@@ -2,6 +2,7 @@
 """Verify the actual merged Compose models without exposing environment secrets."""
 
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -60,10 +61,41 @@ with tempfile.NamedTemporaryFile(mode="w", suffix=".env") as environment:
                 assert not any(m["type"] == "bind" for m in services[name].get("volumes", [])), name
             assert services["mobile"]["profiles"] == ["artifacts"]
             assert "mobile" not in services["nginx"]["depends_on"]
+    pinned = {
+        f"{service.upper()}_IMAGE": f"ghcr.io/example/clims/{service}@sha256:" + "a" * 64
+        for service in ("backend", "frontend", "mobile")
+    }
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "--env-file",
+            environment.name,
+            "-f",
+            str(base),
+            "-f",
+            str(base.with_name("docker-compose.prod.yml")),
+            "--profile",
+            "artifacts",
+            "config",
+            "--format",
+            "json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, **pinned},
+    )
+    released = json.loads(result.stdout)
+    for service, definition in released["services"].items():
+        expected = pinned.get(
+            f"{service.upper()}_IMAGE", models["prod"]["services"][service]["image"]
+        )
+        assert definition["image"] == expected, service
     assert (
         models["dev"]["volumes"]["postgres_data"]["name"]
         != models["prod"]["volumes"]["postgres_data"]["name"]
     )
 print(
-    "PASS: dev/prod Dockerfile parity, development mounts, production isolation, gateway ports, and separate database volumes."
+    "PASS: dev/prod Dockerfile parity, development mounts, production isolation, gateway ports, separate database volumes, and release image overrides."
 )

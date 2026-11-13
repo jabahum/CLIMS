@@ -5,10 +5,12 @@ RUN npm ci
 
 FROM node:22-alpine AS builder
 WORKDIR /app
+ARG VERSION
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV BACKEND_URL=http://backend:8080
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+RUN test -z "$VERSION" || test "$VERSION" = "$(node -p "require('./package.json').version")"
 RUN npm run build
 
 FROM node:22-alpine AS runner

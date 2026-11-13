@@ -2,6 +2,8 @@
 
 [Documentation index](README.md)
 
+For published production images and version tags, see [service image releases](releases.md).
+
 Run all commands from the repository root. `ENVIRONMENT=dev` is the default. Selecting `ENVIRONMENT=prod` switches both the Compose override and the default env file. `ENV_FILE` changes only the variables file.
 
 ## File layout

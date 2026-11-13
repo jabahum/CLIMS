@@ -9,20 +9,22 @@ services:
       dockerfile: infra/docker/postgres/Dockerfile.prod
 
   backend:
-    image: clims-backend:prod
+    image: ${BACKEND_IMAGE:-clims-backend:prod}
     build:
       context: ../..
       dockerfile: infra/docker/backend/Dockerfile.prod
       args:
-        VERSION: ${VERSION:-1.0.0}
+        VERSION: ${VERSION:-}
         COMMIT_HASH: ${COMMIT_HASH:-unknown}
         BUILD_TIME: ${BUILD_TIME:-unknown}
 
   frontend:
-    image: clims-frontend:prod
+    image: ${FRONTEND_IMAGE:-clims-frontend:prod}
     build:
       context: ../../frontend
       dockerfile: ../infra/docker/frontend/Dockerfile.prod
+      args:
+        VERSION: ${VERSION:-}
 
   nginx:
     image: clims-nginx:prod
@@ -32,11 +34,12 @@ services:
 
   mobile:
     profiles: ["artifacts"]
-    image: clims-mobile:prod
+    image: ${MOBILE_IMAGE:-clims-mobile:prod}
     build:
       context: ../../mobile
       dockerfile: ../infra/docker/mobile/Dockerfile.prod
       args:
+        VERSION: ${VERSION:-}
         EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-}
     volumes:
       - ../../artifacts/mobile:/artifacts
