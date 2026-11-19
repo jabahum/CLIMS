@@ -93,4 +93,33 @@ Use `docker login ghcr.io` with credentials authorized for the packages when pul
 
 To use the released mobile exporter, use the same Compose options with `--profile artifacts pull mobile`, then `run --rm --no-deps mobile`. Its bundles are written to `artifacts/mobile/mobile-bundles.tar.gz`. The published mobile API URL is already baked in; local env overrides do not change it.
 
-Without image overrides, production Compose retains the local `clims-<service>:prod` names and existing build commands. CI checks both the defaults and digest override behavior. Release publication does not deploy or restart any environment.
+Without image overrides, production Compose retains the local `clims-<service>:prod` names and existing build commands. CI checks both the defaults and digest override behavior.
+
+## Deploy automatically after a release
+
+After a stable release is published successfully, the same workflow deploys its digest-pinned backend and frontend images over SSH. Pull requests and prereleases do not deploy. The job uses the GitHub `production` environment and serializes deployments. Configure that environment in the publishing repository before the next stable release.
+
+| Setting              | Kind                 | Value                                                                                                             |
+| -------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `DEPLOY_HOST`        | Environment secret   | Server DNS name or IPv4 address reachable from GitHub-hosted runners                                              |
+| `DEPLOY_USER`        | Environment secret   | Dedicated SSH user with Docker access and write access to the deployment directory                                |
+| `DEPLOY_SSH_KEY`     | Environment secret   | Private SSH key for that user, usable without an interactive passphrase                                           |
+| `DEPLOY_KNOWN_HOSTS` | Environment secret   | Verified server public host-key entry in OpenSSH known_hosts format; include `[host]:port` for a nonstandard port |
+| `DEPLOY_PORT`        | Environment variable | SSH port, defaults to `22`                                                                                        |
+| `DEPLOY_PATH`        | Environment variable | Absolute directory without spaces, defaults to `/opt/clims`                                                       |
+
+Provision an amd64 Linux server with Bash, OpenSSH, Docker Engine, Docker Compose v2 with `--wait` support, and `flock` (util-linux). The SSH user's login shell must support Bash quoting. Create `/opt/clims/shared/prod.env` (or the equivalent under `DEPLOY_PATH`) using [the production environment example](../infra/env/prod.env.example), fill in the database and JWT secrets, and restrict its permissions to the deployment user. The workflow never uploads or replaces this file. Configure the host's HTTPS reverse proxy to forward to the configured production Nginx port.
+
+For private GHCR packages, authenticate Docker once on the server as the deployment user using credentials with package read access. Public packages need no registry login. Verify the SSH host key through a trusted server console before storing it; the workflow enforces host-key verification.
+
+Each run uploads tracked Compose/Nginx/infrastructure configuration from the tagged commit and the published `images.env` into `releases/<run-id>-<attempt>`. It validates Compose, pulls application images, builds the small PostgreSQL/Nginx infrastructure images, and starts production services with a five-minute health-check timeout. The mobile image remains an on-demand artifact exporter. The production project name stays `clims-prod`, preserving the existing database volume. No database seeding, volume removal, or image pruning runs during deployment.
+
+The backend applies embedded database migrations at startup. Take a database backup before releases with schema changes. A failed health check fails the deployment job and leaves `current` pointing at the last successful configuration; it does not undo containers or migrations already applied. On success, `current` points to the new directory and `previous` records the prior healthy directory.
+
+If a deployment fails after publication, fix server access or configuration and use **Re-run failed jobs** on that workflow run. This retries deployment without republishing the release. For manual recovery on the server, inspect the failure and migration compatibility, then run:
+
+```sh
+bash /opt/clims/previous/scripts/deploy_release.sh /opt/clims
+```
+
+This reapplies the previous image references and runtime configuration and waits for health checks. Database rollback or restore, if required, is a separate operator action. The server-side lock also serializes this command with automated deployments.
