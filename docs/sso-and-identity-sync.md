@@ -185,6 +185,10 @@ and `identity_sync.go` (dashboard API), wired up in
 
 ## 8. Troubleshooting
 
+For step-by-step diagnosis in production, and for creating or rebuilding the
+`clims` client after it was deleted, see
+[SSO troubleshooting and client recovery](sso-troubleshooting.md).
+
 | Symptom                                                                                             | Likely cause                                                                                                                                                |
 | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CLIMS exits with "configure OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET and OIDC_PUBLIC_ORIGIN" | One of them empty while `OIDC_CLIENT_ID` is set, or `OIDC_PUBLIC_ORIGIN` has a path or trailing slash, or a URL uses HTTP outside loopback                  |

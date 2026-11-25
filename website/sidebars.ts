@@ -14,7 +14,7 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Integrations",
-      items: ["sso-and-identity-sync"],
+      items: ["sso-and-identity-sync", "sso-troubleshooting"],
     },
     {
       type: "category",

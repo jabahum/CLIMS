@@ -4,6 +4,8 @@ This is the runbook. For the overview (how the systems connect, who owns each
 step, the credentials map, Keycloak import files, rotation and
 troubleshooting), read
 [SSO and identity sync onboarding](../../docs/sso-and-identity-sync.md) first.
+When portal sign-in fails or the `clims` client was deleted, follow
+[SSO troubleshooting and client recovery](../../docs/sso-troubleshooting.md).
 
 `clims.application.yaml` is the portal import template for launching CLIMS in
 its own tab. Fill in the target environment, deployment URL, support URL and

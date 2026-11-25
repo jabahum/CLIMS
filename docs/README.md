@@ -8,24 +8,25 @@ See [service image releases](releases.md) for GHCR builds, version tags, and dig
 
 See [creating PostgreSQL migrations](migrations.md) for pinned CLI scaffolding, SQL authoring, testing, and deployment.
 
-| Guide                                             | Purpose                                                                                                 |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [Setup](setup.md)                                 | Start the stack, configure environments, and run the API locally                                        |
-| [Environments](environments.md)                   | Development reloads, production images, Compose selection, and mobile exports                           |
-| [Web and mobile](clients.md)                      | Next.js, Expo, Nginx routing, and device setup                                                          |
-| [PostgreSQL](postgresql.md)                       | Migrations, legacy imports, and data verification                                                       |
-| [Module architecture](modules/README.md)          | Ownership, dependencies, request flow, and extension rules                                              |
-| [Auth](modules/auth.md)                           | Registration, login, JWTs, and rate limits                                                              |
-| [SSO and identity sync](sso-and-identity-sync.md) | Keycloak portal sign-in and MoH SSO Dashboard identity sync: roles, credentials, setup, troubleshooting |
-| [Users](modules/users.md)                         | Accounts, creation service, administration, and account status                                          |
-| [RBAC](modules/rbac.md)                           | Legacy roles, permissions, and administrator protections                                                |
-| [Hotspots](modules/hotspots.md)                   | Hotspot submission, review, activation and deactivation                                                 |
-| [Locations](modules/locations.md)                 | Region, district and subcounty lookups shared across the system                                         |
-| [Notifications](modules/notifications.md)         | Notifying people or groups from any feature, and the inbox API                                          |
-| [Audit log](modules/audit.md)                     | Who did what, when and from where; recording and searching entries                                      |
-| [Inventory](modules/inventory.md)                 | Stock reports for the warehouse, districts and hotspots, and recording stock                            |
-| [Reports](modules/reports.md)                     | Programme reports: hotspot notification fulfilment, response times and the records behind them          |
-| [API / Swagger](api/README.md)                    | Endpoint reference, authentication examples, OpenAPI maintenance, and validation                        |
+| Guide                                             | Purpose                                                                                                    |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| [Setup](setup.md)                                 | Start the stack, configure environments, and run the API locally                                           |
+| [Environments](environments.md)                   | Development reloads, production images, Compose selection, and mobile exports                              |
+| [Web and mobile](clients.md)                      | Next.js, Expo, Nginx routing, and device setup                                                             |
+| [PostgreSQL](postgresql.md)                       | Migrations, legacy imports, and data verification                                                          |
+| [Module architecture](modules/README.md)          | Ownership, dependencies, request flow, and extension rules                                                 |
+| [Auth](modules/auth.md)                           | Registration, login, JWTs, and rate limits                                                                 |
+| [SSO and identity sync](sso-and-identity-sync.md) | Keycloak portal sign-in and MoH SSO Dashboard identity sync: roles, credentials, setup, troubleshooting    |
+| [SSO troubleshooting](sso-troubleshooting.md)     | Diagnose `sso_error` codes in production, create the `clims` Keycloak client, recover after it was deleted |
+| [Users](modules/users.md)                         | Accounts, creation service, administration, and account status                                             |
+| [RBAC](modules/rbac.md)                           | Legacy roles, permissions, and administrator protections                                                   |
+| [Hotspots](modules/hotspots.md)                   | Hotspot submission, review, activation and deactivation                                                    |
+| [Locations](modules/locations.md)                 | Region, district and subcounty lookups shared across the system                                            |
+| [Notifications](modules/notifications.md)         | Notifying people or groups from any feature, and the inbox API                                             |
+| [Audit log](modules/audit.md)                     | Who did what, when and from where; recording and searching entries                                         |
+| [Inventory](modules/inventory.md)                 | Stock reports for the warehouse, districts and hotspots, and recording stock                               |
+| [Reports](modules/reports.md)                     | Programme reports: hotspot notification fulfilment, response times and the records behind them             |
+| [API / Swagger](api/README.md)                    | Endpoint reference, authentication examples, OpenAPI maintenance, and validation                           |
 
 Run `make setup` and `make docker-up` from the repository root. Swagger UI is available at <http://localhost:8080/docs/> and its OpenAPI document at <http://localhost:8080/docs/openapi.json>.
 
